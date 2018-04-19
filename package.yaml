@@ -1,0 +1,48 @@
+name:                skiptracer
+version:             0.1.0.0
+github:              "avinashbot/skiptracer"
+license:             GPL-3
+author:              "Avinash Dwarapu"
+maintainer:          "avinash@dwarapu.me"
+copyright:           "2018 Avinash Dwarapu"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+synopsis:            A trace-printing interpreter for a subset of Haskell.
+category:            Compilers/Interpreters
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on Github at <https://github.com/avinashbot/skiptracer#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- haskell-src-exts >= 1.20 && < 1.21
+
+library:
+  source-dirs: src
+
+executables:
+  skiptracer-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - skiptracer
+
+tests:
+  skiptracer-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - skiptracer

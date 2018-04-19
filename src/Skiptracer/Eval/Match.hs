@@ -10,14 +10,14 @@ import qualified Skiptracer.Syntax as Syntax
 
 -- | Returns whether an expression is sufficiently evaluated to a point where
 -- match can be called.
+--
+-- It's important that matchable returns False for "terminal" expressions.
 matchable :: Exp -> Pat -> Bool
 matchable _          PWld        = True
 matchable _          (PVar _)    = True
 matchable e          (PPat _ p)  = matchable e p
-matchable e          (PNum _)    = Syntax.isValue e
-matchable e          (PLog _)    = Syntax.isValue e
-matchable (Con _ es) (PCon _ ps) = all (uncurry matchable) (zip es ps)
-matchable e          (PCon _ _)  = Syntax.isValue e
+matchable (Con n es) (PCon m ps) = n /= m || all (uncurry matchable) (zip es ps)
+matchable e          _           = Syntax.isValue e
 
 -- | match checks if an expression matches a pattern.
 -- It also returns a list of bindings resulting from the match.

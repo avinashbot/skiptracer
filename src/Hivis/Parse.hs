@@ -22,4 +22,3 @@ instance ToPat (Hs.Pat l) where
     toPat (Hs.PVar _ (Hs.Ident _ s))  = PVar s
     toPat (Hs.PVar _ (Hs.Symbol _ s)) = PVar s
     toPat _                           = undefined
-

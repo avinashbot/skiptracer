@@ -29,20 +29,18 @@ data Ctx
     | ConMatCtx
         String       -- ^ The constructor we're matching
         [Exp]        -- ^ Fully-evaluated expressions
+        Pat          -- ^ The pattern we're matching
         [(Pat, Exp)] -- ^ Unmatched pattern-expression pairs
 
     -- | Evaluates an App body until we have a Lam value.
     -- NOTE: Possibly also support Cons (since they can be partial)
     --
     -- If fully evaluated, it will swap with AppArgCtx.
-    -- If the lambda's first pattern is lazy, it will execute it by itself.
-    | AppCtx
+    | AppLamCtx
         [Exp] -- ^ The function arguments
 
     -- | Evaluates an application argument, pattern matches it, and binds
     -- the resulting variables to the lambda function body.
-    --
-    -- Requires a PatMatCtx in front! AppLamCtx should take care of it.
     --
     -- Returns a Lam (if partially evaluated) or a fully bound Exp.
     | AppArgCtx
@@ -81,9 +79,7 @@ data Ctx
     -- If we match, but there's a guard, we swap to CasGrdCtx.
     -- If we match, and there isn't a guard, we return that expression.
     | CasMatCtx
-        [(Grd Pat, Exp)] -- ^ Failed alts
-        (Grd Pat, Exp)   -- ^ Pattern currently being matched
-        [(Grd Pat, Exp)] -- ^ Remaining alts
+        [(Grd Pat, Exp)] -- ^ Alts
 
     -- | Case guard evaluation. Basically the same as CasMatCtx, since we may
     -- need to go back to it in case the guard fails. It is assumed that the
@@ -92,9 +88,8 @@ data Ctx
     -- If it fails, we go back to evaluating the next expression in CasMatCtx.
     | CasGrdCtx
         Exp              -- ^ Case condition
-        [(Grd Pat, Exp)] -- ^ Failed alts
-        (Pat, Exp)       -- ^ Pattern whose guard is being executed
-        [(Grd Pat, Exp)] -- ^ Remaining alts
+        (Pat, Exp)       -- ^ Current branch
+        [(Grd Pat, Exp)] -- ^ Alts
 
     -- | Stores when a Ref was evaluated so that we can expand them for future
     -- Refs.

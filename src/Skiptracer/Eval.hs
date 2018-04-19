@@ -30,6 +30,21 @@ primOp s    e1      e2      = error $ "invalid primOp: " ++ unwords [show e1, s,
 eval :: State -> State
 
 --
+-- Ref
+-- Goes first, because Syntax.isValue would fail otherwise.
+--
+
+eval (State h cs (Ref v a)) =
+    State h cs (Shr a (snd (Heap.deref a h)))
+
+--
+-- ShrCtx
+--
+
+eval (State h (ShrCtx a : cs) ex)
+    | Syntax.isValue ex = State (Heap.update a ex h) cs ex
+
+--
 -- PatMatCtx
 --
 
@@ -78,6 +93,7 @@ eval (State h (AppArgCtx (Lam (p:ps) bd) ag : cs) ex)
         in  case ag of
                 []     -> State h1 cs (if null ps then bb else Lam ps bb)
                 (e:es) -> State h1 (AppArgCtx (Lam ps bb) es : cs) e
+    | otherwise = State h (PatMatCtx p : AppArgCtx (Lam (p:ps) bd) ag : cs) ex
 
 --
 -- PopFstCtx
@@ -105,30 +121,44 @@ eval (State h (IteCtx lt rt : cs) (Log c)) =
 -- CasMatCtx
 --
 
+eval (State _ (CasMatCtx [] : _) _) =
+    error "exhausted all options in case"
+
 eval (State h (CasMatCtx ((Grd p mg, ex) : rs) : cs) c)
     | Match.matchable c p =
         -- Check for pattern match
-        case (Match.match c p) of
+        case Match.match c p of
             Just ms ->
                 -- Check for case guard
                 case mg of
-                    Just gd -> State h (CasGrdCtx c (p, ex) rs : cs) gd
+                    Just gd -> State h (CasGrdCtx ms ex c rs : cs) gd
                     Nothing ->
                         let (bs, h1) = Heap.allocWithName ms h
                             bb       = Bind.bind [] bs ex
                         in  State h1 cs bb
             Nothing -> State h (CasMatCtx rs : cs) c
-    | otherwise = State h (PatMatCtx p : CasMatCtx ((Grd p mg, ex) : rs) : cs) c
+    | otherwise =
+        State h (PatMatCtx p : CasMatCtx ((Grd p mg, ex) : rs) : cs) c
 
 --
 -- CasGrdCtx
 --
 
--- RefCtx
+-- TODO: again, a sanity-check for all values would be nice
+eval (State h (CasGrdCtx ms ex c rs : cs) (Log g))
+    | g =
+        let (bs, h1) = Heap.allocWithName ms h
+            bb       = Bind.bind [] bs ex
+        in  State h1 cs bb
+    | otherwise = State h (CasMatCtx rs : cs) c
 
-eval (State h cs (App f as))     = State h (AppLamCtx as : cs) f
-eval (State h cs (Pop o l r))    = State h (PopFstCtx o r : cs) l
-eval (State h cs (Ite c l r))    = State h (IteCtx l r : cs) c
-eval (State h cs (Ref v a))      = State h (RefCtx a : cs) (snd (Heap.deref a h))
-eval (State h cs (Cas c (b:bs))) = State h (CasMatCtx [] b bs : cs) c
-eval s@(State _ _ (Let _ _))     = Let.eval s
+--
+-- Continuations
+--
+
+eval (State h cs (Shr a ex))  = State h (ShrCtx a : cs) ex
+eval (State h cs (App f as))  = State h (AppLamCtx as : cs) f
+eval (State h cs (Pop o l r)) = State h (PopFstCtx o r : cs) l
+eval (State h cs (Ite c l r)) = State h (IteCtx l r : cs) c
+eval (State h cs (Cas c bs))  = State h (CasMatCtx bs : cs) c
+eval s@(State _ _ (Let _ _))  = Let.eval s

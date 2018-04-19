@@ -87,13 +87,17 @@ data Ctx
     --
     -- If it fails, we go back to evaluating the next expression in CasMatCtx.
     | CasGrdCtx
-        Exp              -- ^ Case condition
-        (Pat, Exp)       -- ^ Current branch
-        [(Grd Pat, Exp)] -- ^ Alts
+        [(String, Exp)]  -- ^ Matched bindings
+        Exp              -- ^ Current branch
+        Exp              -- ^ Case condition (in case of failure)
+        [(Grd Pat, Exp)] -- ^ Alts (in case of failure)
 
-    -- | Stores when a Ref was evaluated so that we can expand them for future
-    -- Refs.
-    | RefCtx
+    -- | Updates a ref with the result of an evaluation to enable sharing.
+    --
+    -- We also need a special Exp for this because some patterns (eg PVar)
+    -- don't even need to evaluate to match something so we should evaluate
+    -- lazily as well.
+    | ShrCtx
         Int -- ^ The heap address to update
 
     deriving Show

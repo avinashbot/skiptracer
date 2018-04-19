@@ -11,6 +11,7 @@ bind sh ad (Lam p e)   = Lam p (bind (concatMap Syntax.bindings p ++ sh) ad e)
 bind sh ad (App f r)   = App (bind sh ad f) (map (bind sh ad) r)
 bind sh ad (Pop o a b) = Pop o (bind sh ad a) (bind sh ad b)
 bind sh ad (Ite c l r) = Ite (bind sh ad c) (bind sh ad l) (bind sh ad r)
+bind sh ad (Shr a e)   = Shr a (bind sh ad e)
 bind sh ad (Cas c g) =
     Cas (bind sh ad c) (map bindGrd g)
   where

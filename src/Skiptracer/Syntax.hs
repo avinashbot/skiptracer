@@ -78,6 +78,9 @@ data Exp
     -- | A named reference to an Exp on the heap.
     | Ref String Int
 
+    -- | A shared Exp. When fully expanded, it should update the heap.
+    | Shr Int Exp
+
     -- | A name of an unallocated variable.
     | Var String
 

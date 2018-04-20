@@ -16,7 +16,7 @@ module Skiptracer.Heap (
 
 import           Control.Arrow     (second)
 import           Data.Maybe        (fromMaybe, maybe)
-import           Skiptracer.Syntax (Exp (..), Grd (..))
+import           Skiptracer.Syntax (Exp (..))
 import qualified Skiptracer.Syntax as Syntax
 
 -- | The heap stores expressions at integer addresses.
@@ -27,7 +27,9 @@ data Heap a = Heap Int [Int] [(Int, a)]
 
 instance (Show a) => Show (Heap a) where
     -- | Print the heap size and heap contents.
-    show (Heap size _ aes) = "Heap (" ++ show size ++ "): " ++ show aes
+    -- show (Heap s _ _) = "Heap (" ++ show s ++ ")"
+    show (Heap size _ aes) =
+        "Heap (" ++ show size ++ "):" ++ (concatMap (("\n  " ++) . show) aes)
 
 -- | Create a new empty heap.
 empty :: Heap a

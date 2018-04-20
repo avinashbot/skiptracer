@@ -1,7 +1,7 @@
 -- | The Syntax used by the interpreter.
 module Skiptracer.Syntax (
     Pat (..),
-    Grd (..),
+    Alt (..),
     Exp (..),
 
     -- Patterns
@@ -33,7 +33,7 @@ bindings (PCon b ps) = b : concatMap bindings ps
 bindings _           = []
 
 -- | A possibly guarded pattern matching expression.
-data Grd a = Grd a (Maybe Exp) deriving Show
+data Alt = Alt Pat (Maybe Exp) Exp deriving Show
 
 -- | A haskell expression.
 data Exp
@@ -57,18 +57,11 @@ data Exp
     --   > App x [a, b] == App (App x a) b
     | App Exp [Exp]
 
-    -- | A primitive operation (e.g. "*", "==").
-    --
-    -- The difference between normal functions and primitive operations
-    -- is that primitive operations cannot proceed unless the values on
-    -- both ends are primitives.
-    | Pop String Exp Exp
-
     -- | If-Then-Else expression.
     | Ite Exp Exp Exp
 
     -- | Case Expression with Guarded Alts
-    | Cas Exp [(Grd Pat, Exp)]
+    | Cas Exp [Alt]
 
     -- | Let Expression
     -- NOTE: Let *can* be guarded, but without pattern matching support, it's

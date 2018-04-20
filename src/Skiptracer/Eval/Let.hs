@@ -47,7 +47,7 @@ allocLet (p, e) (as, fs, h0) =
 updateHeapLets :: [Int] -> [(String, Int)] -> Heap Exp -> Heap Exp
 updateHeapLets []     _  h = h
 updateHeapLets (l:ls) bs h = let h1 = Heap.adjust (Bind.bind [] bs) l h
-                             in  updateHeapLets ls bs h
+                             in  updateHeapLets ls bs h1
 
 -- | Eval function that specializes in Lets.
 eval :: State -> State

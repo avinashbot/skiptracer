@@ -78,6 +78,7 @@ eval (State h (ConMatCtx n es p us : cs) ex)
 --
 -- AppCtx
 --
+-- TODO: add case for single argument primitive operations
 
 eval (State h (AppCtx [a, b] : cs) (Var op))
     | isPrimOp op = State h (PopFstCtx op b : cs) a
@@ -90,7 +91,7 @@ eval (State h (AppCtx (a : as) : cs) ex)
 --
 
 eval (State h (AppArgCtx (Con n es) as : cs) ex) =
-    State h cs (Con n (es ++ [ex] ++ es))
+    State h cs (Con n (es ++ [ex] ++ as))
 
 eval (State h (AppArgCtx (Lam (p:ps) bd) ag : cs) ex)
     | Match.matchable ex p =

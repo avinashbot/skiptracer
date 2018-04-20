@@ -106,5 +106,9 @@ data Ctx
     | ShrCtx
         Int -- ^ The heap address to update
 
+    -- | Fully evaluate the running argument to WHNF and then toss it.
+    | SeqCtx
+        Exp
+
     deriving Show
 

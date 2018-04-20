@@ -38,44 +38,35 @@ data Alt = Alt Pat (Maybe Exp) Exp deriving Show
 -- | A haskell expression.
 data Exp
 
+    -- | A name of an unallocated variable.
+    = Var String
+
     -- | A number literal or a numerical value.
-    = Num Int
+    | Num Int
     -- | A boolean literal or a boolean value.
     | Log Bool
-
     -- | A Datatype. Treated as a value by the interpreter, although it can
     -- be decomposed using pattern matching.
     | Con String [Exp]
-
     -- | Lambda Expression
     | Lam [Pat] Exp
 
-    -- | Function application. The first argument must be a Lam or evaluate to
-    -- a Lam.
+    -- | Function application.
     --
     -- Applications of multiple arguments are nested. As in:
     --   > App x [a, b] == App (App x a) b
     | App Exp [Exp]
-
     -- | If-Then-Else expression.
     | Ite Exp Exp Exp
-
     -- | Case Expression with Guarded Alts
     | Cas Exp [Alt]
-
-    -- | Let Expression
-    -- NOTE: Let *can* be guarded, but without pattern matching support, it's
-    -- not really worth implementing.
+    -- | Let Expression (without guard support)
     | Let [(Pat, Exp)] Exp
-
     -- | A named reference to an Exp on the heap.
     | Ref String Int
 
     -- | A shared Exp. When fully expanded, it should update the heap.
     | Shr Int Exp
-
-    -- | A name of an unallocated variable.
-    | Var String
 
     -- -- | Function with a multiple matches and guarded where clauses
     -- --

@@ -1,10 +1,26 @@
-module Skiptracer.GC where
+module Skiptracer.GC (mark) where
 
 import           Data.Maybe        (maybe)
-import           Skiptracer.Eval   (Ctx (..), State (..))
+import           Skiptracer.Eval   (Ctx (..))
 import           Skiptracer.Heap   (Heap)
-import qualified Skiptracer.Heap   as Heap (deref)
+import qualified Skiptracer.Heap   as Heap
 import           Skiptracer.Syntax (Alt (..), Exp (..))
+
+-- | Take a state and return all live references.
+-- We don't use state directly because Ctxs may have been truncated.
+mark :: Exp -> [Ctx] -> Heap Exp -> [Int]
+mark e cs = heapRefs (mapRefs cs ++ refs e) []
+
+-- | Run a breadth-first search on a heap, returning live references,
+-- ensuring we don't fall into a recursive loop by tracking previous
+-- matches.
+--
+-- Probably shouldn't have duplicates (if I haven't made any stupid mistakes).
+heapRefs :: [Int] -> [Int] -> Heap Exp -> [Int]
+heapRefs []     s _ = s
+heapRefs (n:ns) s h
+    | n `elem` s = heapRefs ns s h
+    | otherwise  = heapRefs (ns ++ refs (Heap.get n h)) (n : s) h
 
 -- | Allows us to walk through the running "stack", as it were.
 class Refs a where refs :: a -> [Int]
@@ -12,9 +28,6 @@ class Refs a where refs :: a -> [Int]
 -- | Short alias for (concatMap . refs)
 mapRefs :: Refs a => [a] -> [Int]
 mapRefs = concatMap refs
-
-instance Refs State where
-    refs (State _ cs e) = mapRefs cs ++ refs e
 
 instance Refs Exp where
     refs (Ref _ i)   = [i]
@@ -39,14 +52,3 @@ instance Refs Ctx where
     refs (CasGrdCtx bs m c as) = concatMap (refs . snd) bs ++ refs m ++ refs c ++ mapRefs as
     refs (RefCtx a)            = [a]
     refs _                     = []
-
--- | Run a breadth-first search on a heap, returning live references,
--- ensuring we don't fall into a recursive loop by tracking previous
--- matches.
---
--- Probably shouldn't have duplicates (if I haven't made any stupid mistakes).
-heapRefs :: [Int] -> [Int] -> Heap Exp -> [Int]
-heapRefs []     s _ = s
-heapRefs (n:ns) s h
-    | n `elem` s = heapRefs ns s h
-    | otherwise  = heapRefs (ns ++ refs (snd (Heap.deref n h))) (n : s) h

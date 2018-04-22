@@ -7,7 +7,7 @@ import qualified Skiptracer.Syntax as Syntax
 -- | Allocate a set of expressions, taking into account variable shadowing.
 bind :: [String] -> [(String, Int)] -> Exp -> Exp
 bind sh ad (Con n e)   = Con n (map (bind sh ad) e)
-bind sh ad (Lam p e)   = Lam p (bind (concatMap Syntax.bindings p ++ sh) ad e)
+bind sh ad (Lam n p e) = Lam n p (bind (concatMap Syntax.bindings p ++ sh) ad e)
 bind sh ad (App f r)   = App (bind sh ad f) (map (bind sh ad) r)
 bind sh ad (Ite c l r) = Ite (bind sh ad c) (bind sh ad l) (bind sh ad r)
 bind sh ad (Cas c as) =

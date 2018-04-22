@@ -9,7 +9,7 @@ data State = State (Heap Exp) [Ctx] Exp
 instance Show State where
     show (State h cs e) = unlines
         [ show h
-        , "Ctx: " ++ show cs
+        , "Ctx:" ++ concatMap (("\n  " ++) . show) cs
         , "Exp: " ++ show e
         ]
 

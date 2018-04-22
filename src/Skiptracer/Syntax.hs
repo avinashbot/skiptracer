@@ -48,7 +48,7 @@ data Exp
     -- be decomposed using pattern matching.
     | Con String [Exp]
     -- | Lambda Expression
-    | Lam [Pat] Exp
+    | Lam (Maybe String) [Pat] Exp
 
     -- | Function application.
     --

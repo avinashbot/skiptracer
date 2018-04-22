@@ -32,7 +32,7 @@ heapBinds p          = Syntax.bindings p
 -- | Return an expression that "extracts" a variable from a pattern from an
 -- expression.
 patExp :: Int -> String -> Pat -> Exp
-patExp a v p = App (Lam [p] (Var v)) [Ref v a]
+patExp a v p = App (Lam Nothing [p] (Var v)) [Ref v a]
 
 -- | Allocates the let statements and their patterns to the heap.
 allocLet :: (Pat, Exp) -> ([Int], [(String, Int)], Heap Exp) -> ([Int], [(String, Int)], Heap Exp)

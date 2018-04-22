@@ -89,7 +89,7 @@ eval (State h (AppCtx (a : as) : cs) ex)
 eval (State h (AppArgCtx (Con n es) as : cs) ex) =
     State h cs (Con n (es ++ [ex] ++ as))
 
-eval (State h (AppArgCtx (Lam (p:ps) bd) ag : cs) ex)
+eval (State h (AppArgCtx (Lam n (p:ps) bd) ag : cs) ex)
     | Match.matchable ex p =
         let bs       = fromMaybe
                            (error "argument does not match lambda parameter")
@@ -97,11 +97,11 @@ eval (State h (AppArgCtx (Lam (p:ps) bd) ag : cs) ex)
             (as, h1) = Heap.allocWithName bs h
             bb       = Bind.bind [] as bd
         in  case ag of
-                []     -> State h1 cs (if null ps then bb else Lam ps bb)
-                (e:es) -> State h1 (AppArgCtx (Lam ps bb) es : cs) e
-    | otherwise = State h (PatMatCtx p : AppArgCtx (Lam (p:ps) bd) ag : cs) ex
+                []     -> State h1 cs (if null ps then bb else Lam n ps bb)
+                (e:es) -> State h1 (AppArgCtx (Lam n ps bb) es : cs) e
+    | otherwise = State h (PatMatCtx p : AppArgCtx (Lam n (p:ps) bd) ag : cs) ex
 
-eval (State _ (AppArgCtx (Lam [] _) _ : _) _) =
+eval (State _ (AppArgCtx (Lam _ [] _) _ : _) _) =
     error "too many arguments provided to lambda"
 
 eval (State _ (AppArgCtx fn _ : _) _)
@@ -190,4 +190,4 @@ eval s@(State _ _ (Let _ _))  = Let.eval s
 
 eval s
     | isFinal s = s
-    | otherwise = error $ "no evaluation strategy for state\n" ++ (show s)
+    | otherwise = error $ "no evaluation strategy for state\n" ++ show s

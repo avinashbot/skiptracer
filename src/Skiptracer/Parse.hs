@@ -33,7 +33,8 @@ instance ToExp (Hs.Exp l) where
     toExp (Hs.Paren _ e) = toExp e
 
     -- Num
-    toExp (Hs.Lit _ (Hs.Int _ i _)) = Num (fromIntegral i)
+    toExp (Hs.Lit _ (Hs.Int _ i _))               = Num (fromIntegral i)
+    toExp (Hs.NegApp _ (Hs.Lit _ (Hs.Int _ i _))) = Num (negate (fromIntegral i))
 
     -- Log
     toExp (Hs.Con _ (Hs.UnQual _ (Hs.Ident _ "True"))) = Log True
@@ -48,11 +49,18 @@ instance ToExp (Hs.Exp l) where
         Con ("(" ++ replicate (length es) ',' ++ ")") (map toExp es)
 
     -- Lam
-    toExp (Hs.Lambda _ ps e) = Lam (map toPat ps) (toExp e)
+    toExp (Hs.Lambda _ ps e) = Lam Nothing (map toPat ps) (toExp e)
 
     -- App
     toExp (Hs.InfixApp _ e1 op e2) = App (toExp op) [toExp e1, toExp e2]
-    toExp (Hs.App _ f1 a1) = App (toExp f1) [toExp a1]
+    toExp (Hs.App _ f1 a1) =
+        case toExp f1 of
+            App (Var n) a2 -> App (Var n) (a2 ++ [toExp a1])
+            f2             -> App f2 [toExp a1]
+    toExp (Hs.LeftSection _ e o) =
+        Lam Nothing [PVar "x"] (App (toExp o) [Var "x", toExp e])
+    toExp (Hs.RightSection _ o e) =
+        Lam Nothing [PVar "x"] (App (toExp o) [toExp e, Var "x"])
 
     -- Ite
     toExp (Hs.If _ cd lt rt) = Ite (toExp cd) (toExp lt) (toExp rt)
@@ -116,7 +124,7 @@ toAlt (Hs.Alt _ p (Hs.GuardedRhss _ rs) Nothing) = map toGuardedAlt rs
 
 toDec :: Hs.Decl l -> Maybe (Pat, Exp)
 toDec (Hs.FunBind _ [Hs.Match _ n ps (Hs.UnGuardedRhs _ e) Nothing]) =
-    Just (PVar (name n), Lam (map toPat ps) (toExp e))
+    Just (PVar (name n), Lam (Just (name n)) (map toPat ps) (toExp e))
 toDec (Hs.PatBind _ p (Hs.UnGuardedRhs _ e) Nothing) =
     Just (toPat p, toExp e)
 toDec _ = Nothing

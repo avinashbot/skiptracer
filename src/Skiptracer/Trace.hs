@@ -1,13 +1,21 @@
-module Skiptracer.Trace where
+module Skiptracer.Trace (
+    TraceOpts (..),
 
-import           Skiptracer.Eval (State (..))
-import qualified Skiptracer.Eval as Eval (eval, isFinal)
+    traces,
+    display
+) where
+
+import           Skiptracer.Eval   (Ctx (..), State (..))
+import qualified Skiptracer.Eval   as Eval (eval, isFinal)
+import           Skiptracer.Syntax (Exp (..))
 
 -- Technically, all this module does is filter a really long list.
 
-newtype TraceOpts =
+data TraceOpts =
     TraceOpts
-    { yo :: Bool
+    { tDepth :: Int            -- ^ Max context depth
+    , tSkip  :: [String]       -- ^ Functions to skip
+    , tOnly  :: Maybe [String] -- ^ Functions to keep (takes precendence)
     }
 
 -- | Returns all the evaluation steps from a starting state.
@@ -16,6 +24,15 @@ traces s
     | Eval.isFinal s = [s]
     | otherwise      = s : traces (Eval.eval s)
 
+-- | Takes a list of subsequent states and only keeps the interesting
+-- stuff.
+display :: TraceOpts -> [State] -> [State]
+display _ []     = []
+display o (s:ss) =
+    case s of
+        (State _ (RefCtx _ : _) _) -> display o ss
+        (State _ _ (Ref _ _))      -> display o ss
+        _                          -> s : display o ss
 
 -- If app is primOp, we eval until there's the primops were exhausted
 -- If app is safe, we eval until the length of the ctx is (length - 1)

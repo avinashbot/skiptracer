@@ -1,4 +1,6 @@
 module Skiptracer.Eval (
+    module Skiptracer.Eval.Data,
+
     eval,
     fromExp,
     isFinal
@@ -14,13 +16,15 @@ import qualified Skiptracer.Heap       as Heap
 import           Skiptracer.Syntax     (Alt (..), Exp (..), Pat (..))
 import qualified Skiptracer.Syntax     as Syntax
 
+-- | Whether the state is in WHNF
 isFinal :: State -> Bool
-isFinal (State _ [] e) | Syntax.isRef e   = False
 isFinal (State _ [] e) | Syntax.isValue e = True
 isFinal _              = False
 
+-- | Create a new state from a simple expression.
+-- Basically the State equivalent to "pure"
 fromExp :: Exp -> State
-fromExp e = State Heap.empty [] e
+fromExp = State Heap.empty []
 
 -- | Check if a function application is a primitive operation.
 isPrimOp :: String -> Bool
@@ -42,14 +46,6 @@ primOp "/=" (Log m) (Log n) = Log (m /= n)
 primOp s    e1      e2      = error $ "invalid primOp: " ++ unwords [show e1, s, show e2]
 
 eval :: State -> State
-
---
--- Ref
--- Goes first, because Syntax.isValue would fail otherwise.
---
-
-eval (State h cs (Ref v a)) =
-    State h cs (Shr a (snd (Heap.deref a h)))
 
 --
 -- PatMatCtx
@@ -78,7 +74,7 @@ eval (State h (ConMatCtx n es p us : cs) ex)
 --
 -- AppCtx
 --
--- TODO: add case for single argument primitive operations
+-- TODO: add case for partial single-argument primitive operations
 
 eval (State h (AppCtx [a, b] : cs) (Var op))
     | isPrimOp op = State h (PopFstCtx op b : cs) a
@@ -172,24 +168,26 @@ eval (State _ (CasGrdCtx{} : _) ex)
     | Syntax.isValue ex = error "non-boolean value returned by case guard"
 
 --
--- ShrCtx
+-- RefCtx
 --
 
-eval (State h (ShrCtx a : cs) ex)
+eval (State h (RefCtx a : cs) ex)
     | Syntax.isValue ex = State (Heap.update a ex h) cs ex
 
 --
 -- Continuations
 --
 
-eval (State h cs (Shr a ex))  = State h (ShrCtx a : cs) ex
 eval (State h cs (App f as))  = State h (AppCtx as : cs) f
 eval (State h cs (Ite c l r)) = State h (IteCtx l r : cs) c
 eval (State h cs (Cas c bs))  = State h (CasMatCtx bs : cs) c
+eval (State h cs (Ref v a))   = State h (RefCtx a : cs) (snd (Heap.deref a h))
 eval s@(State _ _ (Let _ _))  = Let.eval s
 
 --
--- Catch-All
+-- Catch-all
 --
 
-eval s | isFinal s = s
+eval s
+    | isFinal s = s
+    | otherwise = error $ "no evaluation strategy for state\n" ++ (show s)

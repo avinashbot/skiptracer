@@ -8,5 +8,5 @@ import           Skiptracer.Eval.Data (State (..))
 
 main :: IO ()
 main = do
-    file <- readFile "examples/map.hs"
+    file <- readFile "examples/map_fold.hs"
     print $ until isFinal (\s -> trace (show s) (eval s)) (fromExp (parse file))

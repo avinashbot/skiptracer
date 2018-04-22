@@ -3,11 +3,9 @@ map' f ls =
         []     -> []
         (x:xs) -> (f x) : (map' f xs)
 
--- foldr :: (a -> b -> b) -> b -> t a -> b
 foldr' f b ls =
     case ls of
         []     -> b
         (a:as) -> f a (foldr' f b as)
-
 
 main = foldr' (\a b -> a + b) 0 (map' (\n -> n + 1) [1, 2, 3])

@@ -9,8 +9,7 @@ module Skiptracer.Syntax (
 
     -- Expressions
     isValue,
-    isVar,
-    isRef
+    isVar
 ) where
 
 import           Control.Arrow (second, (***))
@@ -62,11 +61,9 @@ data Exp
     | Cas Exp [Alt]
     -- | Let Expression (without guard support)
     | Let [(Pat, Exp)] Exp
+
     -- | A named reference to an Exp on the heap.
     | Ref String Int
-
-    -- | A shared Exp. When fully expanded, it should update the heap.
-    | Shr Int Exp
 
     -- -- | Function with a multiple matches and guarded where clauses
     -- --
@@ -83,20 +80,14 @@ data Exp
 
 -- | Is this expression a direct value?
 isValue :: Exp -> Bool
-isValue (Var v)   = error $ "unbound variable: " ++ v
-isValue (Ref v _) = error $ "unresolved reference: " ++ v
-isValue Con{}     = True
-isValue Num{}     = True
-isValue Log{}     = True
-isValue Lam{}     = True
-isValue _         = False
+isValue (Var v) = error $ "unbound variable: " ++ v
+isValue Con{}   = True
+isValue Num{}   = True
+isValue Log{}   = True
+isValue Lam{}   = True
+isValue _       = False
 
 -- | Is this expression an unbound variable?
 isVar :: Exp -> Bool
 isVar (Var _) = True
 isVar _       = False
-
--- | Is this expression a reference to an expression on the heap?
-isRef :: Exp -> Bool
-isRef (Ref _ _) = True
-isRef _         = False

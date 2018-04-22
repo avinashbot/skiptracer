@@ -10,7 +10,6 @@ bind sh ad (Con n e)   = Con n (map (bind sh ad) e)
 bind sh ad (Lam p e)   = Lam p (bind (concatMap Syntax.bindings p ++ sh) ad e)
 bind sh ad (App f r)   = App (bind sh ad f) (map (bind sh ad) r)
 bind sh ad (Ite c l r) = Ite (bind sh ad c) (bind sh ad l) (bind sh ad r)
-bind sh ad (Shr a e)   = Shr a (bind sh ad e)
 bind sh ad (Cas c as) =
     Cas (bind sh ad c) (map bindAlt as)
   where

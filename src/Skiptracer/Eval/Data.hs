@@ -103,12 +103,8 @@ data Ctx
     -- We also need a special Exp for this because some patterns (eg PVar)
     -- don't even need to evaluate to match something so we should evaluate
     -- lazily as well.
-    | ShrCtx
+    | RefCtx
         Int -- ^ The heap address to update
-
-    -- | Fully evaluate the running argument to WHNF and then toss it.
-    | SeqCtx
-        Exp
 
     deriving Show
 

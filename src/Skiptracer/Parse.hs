@@ -8,6 +8,7 @@ import           Data.Maybe                   (mapMaybe)
 import qualified Language.Haskell.Exts        as Hs
 import qualified Language.Haskell.Exts.Simple as Shs
 import           Skiptracer.Syntax            (Alt (..), Exp (..), Pat (..))
+import qualified Skiptracer.Syntax            as Syntax
 
 parse :: String -> Exp
 parse = toExp . parseGhc
@@ -70,6 +71,7 @@ instance ToExp (Hs.Exp l) where
     toExp (Hs.Let _ (Hs.BDecls _ bs) e) = Let (mapMaybe toDec bs) (toExp e)
 
     -- Var
+    toExp (Hs.Var _ (Hs.UnQual _ n)) | Syntax.isPrimOp (name n) = Lam (Just (name n)) [PVar "x", PVar "y"] (App (Var (name n)) [Var "x", Var "y"])
     toExp (Hs.Var _ (Hs.UnQual _ n)) = Var (name n)
 
 

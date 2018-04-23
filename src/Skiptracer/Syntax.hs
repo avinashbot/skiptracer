@@ -9,7 +9,10 @@ module Skiptracer.Syntax (
 
     -- Expressions
     isValue,
-    isVar
+    isVar,
+
+    -- Miscellaneous
+    isPrimOp
 ) where
 
 import           Control.Arrow (second, (***))
@@ -91,3 +94,7 @@ isValue _       = False
 isVar :: Exp -> Bool
 isVar (Var _) = True
 isVar _       = False
+
+-- | Check if a function application is a primitive operation.
+isPrimOp :: String -> Bool
+isPrimOp = (`elem` ["+", "-", "*", "<", ">", "<=", ">=", "==", "/="])

@@ -8,4 +8,4 @@ foldr' f b ls =
         []     -> b
         (a:as) -> f a (foldr' f b as)
 
-main = foldr' (\a b -> a + b) 0 (map' (\n -> n + 1) [1, 2, 3])
+main = foldr' (+) 0 (map' (+ 1) [1, 2, 3])

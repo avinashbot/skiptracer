@@ -26,10 +26,6 @@ isFinal _              = False
 fromExp :: Exp -> State
 fromExp = State Heap.empty []
 
--- | Check if a function application is a primitive operation.
-isPrimOp :: String -> Bool
-isPrimOp = (`elem` ["+", "-", "*", "<", ">", "<=", ">=", "==", "/="])
-
 -- | Evaluate a primitive operation.
 primOp :: String -> Exp -> Exp -> Exp
 primOp "+"  (Num m) (Num n) = Num (m + n)
@@ -74,10 +70,9 @@ eval (State h (ConMatCtx n es p us : cs) ex)
 --
 -- AppCtx
 --
--- TODO: add case for partial single-argument primitive operations
 
 eval (State h (AppCtx [a, b] : cs) (Var op))
-    | isPrimOp op = State h (PopFstCtx op b : cs) a
+    | Syntax.isPrimOp op = State h (PopFstCtx op b : cs) a
 
 eval (State h (AppCtx (a : as) : cs) ex)
     | Syntax.isValue ex = State h (AppArgCtx ex as : cs) a
@@ -97,8 +92,8 @@ eval (State h (AppArgCtx (Lam n (p:ps) bd) ag : cs) ex)
             (as, h1) = Heap.allocWithName bs h
             bb       = Bind.bind [] as bd
         in  case ag of
-                []     -> State h1 cs (if null ps then bb else Lam n ps bb)
-                (e:es) -> State h1 (AppArgCtx (Lam n ps bb) es : cs) e
+                []     -> State h1 cs (if null ps then bb else Lam Nothing ps bb)
+                (e:es) -> State h1 (AppArgCtx (Lam Nothing ps bb) es : cs) e
     | otherwise = State h (PatMatCtx p : AppArgCtx (Lam n (p:ps) bd) ag : cs) ex
 
 eval (State _ (AppArgCtx (Lam _ [] _) _ : _) _) =

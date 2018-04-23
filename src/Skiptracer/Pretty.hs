@@ -9,59 +9,65 @@ module Skiptracer.Pretty (
     prettyPrint
 ) where
 
-import           Data.Char               (isSymbol)
-import qualified Language.Haskell.Pretty as PP
-import           Language.Haskell.Syntax
-import           Skiptracer.Syntax       (Alt (..), Exp (..), Pat (..))
+import           Data.Char             (isSymbol, isUpper)
+import qualified Language.Haskell.Exts as Hs
+import           Skiptracer.Syntax     (Alt (..), Exp (..), Pat (..))
+import qualified Skiptracer.Syntax     as Syntax
 
 prettyPrint :: Exp -> String
-prettyPrint = PP.prettyPrint . expr
+prettyPrint = Hs.prettyPrint . expr
 
-noSrcLoc :: SrcLoc
-noSrcLoc = SrcLoc "" 0 0
+expr :: Exp -> Hs.Exp Hs.SrcSpanInfo
+expr (Var n)                 = Hs.Var l (qname n)
+expr (Num n)                 | n >= 0 = Hs.Lit l (Hs.Int l (fromIntegral n) (show n))
+                             | n < 0  = Hs.NegApp l (Hs.Lit l (Hs.Int l (fromIntegral (negate n)) (show n)))
+expr (Log True)              = Hs.Con l (qname "True")
+expr (Log False)             = Hs.Con l (qname "False")
+expr (Con n [])              = Hs.Con l (qname n)
+expr (Con n es)              = expr (App (Con n []) es)
+expr (Lam (Just n) _ _)      = Hs.Var l (qname n)
+expr (Lam Nothing ps e)      = Hs.Lambda l (map pat ps) (expr e)
+expr (App (Var x) [a, b])    | Syntax.isPrimOp x = Hs.InfixApp l (expr a) (qop x) (expr b)
+expr (App (Con x []) [a, b]) | x == ":" = Hs.InfixApp l (expr a) (qop x) (expr b)
+expr (App a bs)              = foldl (Hs.App l) (expr a) (map expr bs)
+expr (Ite c t f)             = Hs.If l (expr c) (expr t) (expr f)
+expr (Cas e as)              = Hs.Case l (expr e) (map alt as)
+expr (Let ms e)              = Hs.Let l (Hs.BDecls l (map decl ms)) (expr e)
+expr (Ref n i)               = Hs.Var l (qname (n ++ show i))
 
-expr :: Exp -> HsExp
-expr (Var n)            = HsVar (qname n)
-expr (Num n)            | n >= 0 = HsLit (HsInt (fromIntegral n))
-                        | n < 0  = HsNegApp (HsLit (HsInt (fromIntegral (negate n))))
-expr (Log True)         = HsCon (qname "True")
-expr (Log False)        = HsCon (qname "False")
-expr (Con n [])         = HsCon (qname n)
-expr (Con n es)         = expr (App (Con n []) es)
-expr (Lam (Just n) _ _) = HsVar (qname n)
-expr (Lam Nothing ps e) = HsLambda noSrcLoc (map pat ps) (expr e)
-expr (App a bs)         = foldl HsApp (expr a) (map expr bs)
-expr (Ite c t f)        = HsIf (expr c) (expr t) (expr f)
-expr (Cas e as)         = HsCase (expr e) (map alt as)
-expr (Let ms e)         = HsLet (map decl ms) (expr e)
-expr (Ref n i)          = HsVar (qname (n ++ show i))
+alt :: Alt -> Hs.Alt Hs.SrcSpanInfo
+alt (Alt p Nothing e)  = Hs.Alt l (pat p) (Hs.UnGuardedRhs l (expr e)) Nothing
+alt (Alt p (Just g) e) = Hs.Alt l (pat p) (Hs.GuardedRhss l [Hs.GuardedRhs l [Hs.Qualifier l (expr g)] (expr e)]) Nothing
 
-alt :: Alt -> HsAlt
-alt (Alt p Nothing e)  = HsAlt noSrcLoc (pat p) (HsUnGuardedAlt (expr e)) []
-alt (Alt p (Just g) e) = HsAlt noSrcLoc (pat p) (HsGuardedAlts [HsGuardedAlt noSrcLoc (expr g) (expr e)]) []
+decl :: (Pat, Exp) -> Hs.Decl Hs.SrcSpanInfo
+decl (p, Lam (Just n) ps e) = Hs.FunBind l [Hs.Match l (name n) (map pat ps) (Hs.UnGuardedRhs l (expr e)) Nothing]
+decl (p, e)                 = Hs.PatBind l (pat p) (Hs.UnGuardedRhs l (expr e)) Nothing
 
-decl :: (Pat, Exp) -> HsDecl
-decl (p, Lam (Just n) ps e) = HsFunBind [HsMatch noSrcLoc (name n) (map pat ps) (HsUnGuardedRhs (expr e)) []]
-decl (p, e)                 = HsPatBind noSrcLoc (pat p) (HsUnGuardedRhs (expr e)) []
+pat :: Pat -> Hs.Pat Hs.SrcSpanInfo
+pat (PCon ":" [p, q]) = Hs.PInfixApp l (pat p) (qname ":") (pat q)
+pat (PCon n ps)       = Hs.PApp l (qname n) (map pat ps)
+pat (PPat n p)        = Hs.PAsPat l (name n) (pat p)
+pat (PNum i)          = Hs.PLit l (if i < 0 then Hs.Negative l else Hs.Signless l) (Hs.Int l (fromIntegral i) (show i))
+pat (PLog True)       = Hs.PApp l (qname "True") []
+pat (PLog False)      = Hs.PApp l (qname "False") []
+pat (PVar n)          = Hs.PVar l (name n)
+pat PWld              = Hs.PWildCard l
 
-pat :: Pat -> HsPat
-pat (PCon n ps)  = HsPApp (qname n) (map pat ps)
-pat (PPat n p)   = HsPAsPat (name n) (pat p)
-pat (PNum i)     = HsPLit (HsInt (fromIntegral i))
-pat (PLog True)  = HsPApp (qname "True") []
-pat (PLog False) = HsPApp (qname "False") []
-pat (PVar n)     = HsPVar (name n)
-pat PWld         = HsPWildCard
+qop :: String -> Hs.QOp Hs.SrcSpanInfo
+qop n = if isUpper (head n) then Hs.QConOp l (qname n) else Hs.QVarOp l (qname n)
 
-qname :: String -> HsQName
-qname "()" = Special HsUnitCon
-qname "[]" = Special HsListCon
-qname ":"  = Special HsCons
+qname :: String -> Hs.QName Hs.SrcSpanInfo
+qname "()" = Hs.Special l (Hs.UnitCon l)
+qname "[]" = Hs.Special l (Hs.ListCon l)
+qname ":"  = Hs.Special l (Hs.Cons l)
 qname n
-    | all (== ',') n = Special (HsTupleCon (length n))
-    | otherwise      = UnQual (name n)
+    | all (== ',') n = Hs.Special l (Hs.TupleCon l Hs.Boxed (length n))
+    | otherwise      = Hs.UnQual l (name n)
 
-name :: String -> HsName
+name :: String -> Hs.Name Hs.SrcSpanInfo
 name n
-    | all isSymbol n = HsSymbol n
-    | otherwise      = HsIdent n
+    | all isSymbol n = Hs.Symbol l n
+    | otherwise      = Hs.Ident l n
+
+l :: Hs.SrcSpanInfo
+l = Hs.noSrcSpan

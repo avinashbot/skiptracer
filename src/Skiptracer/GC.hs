@@ -6,8 +6,7 @@ import           Skiptracer.Heap   (Heap)
 import qualified Skiptracer.Heap   as Heap
 import           Skiptracer.Syntax (Alt (..), Exp (..))
 
--- | Take a state and return all live references.
--- We don't use state directly because Ctxs may have been truncated.
+-- | Take an Exp and return all live references.
 mark :: Exp -> Heap Exp -> [(String, Int)]
 mark e = heapRefs (refs e) []
 

@@ -8,7 +8,9 @@ module Skiptracer.Heap (
 
     update,
     adjust,
-    delete,
+
+    deallocOne,
+    deallocMany,
 
     allocOne,
     allocMany,
@@ -62,12 +64,17 @@ adjust :: (a -> a) -> Int -> Heap a -> Heap a
 adjust f a h = update a (f (get a h)) h
 
 -- | Delete something from the heap.
-delete :: Int -> Heap a -> Heap a
-delete a (Heap s fs aes) = Heap (s - 1) (a : fs) (del aes)
+deallocOne :: Int -> Heap a -> Heap a
+deallocOne a (Heap s fs aes) = Heap (s - 1) (a : fs) (del aes)
   where
     del []          = error $ "could not find heap address: " ++ (show a)
     del ((x, y):xs) | x == a    = xs
                     | otherwise = (x, y) : del xs
+
+-- | Deallocate multiple addresses.
+deallocMany :: [Int] -> Heap a -> Heap a
+deallocMany []     h = h
+deallocMany (a:as) h = deallocMany as (deallocOne a h)
 
 -- | Allocate a single expression onto the heap.
 -- Returns the allocated heap address and new heap.

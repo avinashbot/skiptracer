@@ -6,7 +6,7 @@ module Skiptracer.Eval (
     isFinal
 ) where
 
-import           Data.Maybe            (fromMaybe)
+import           Data.Maybe            (fromJust, fromMaybe)
 import qualified Skiptracer.Eval.Bind  as Bind
 import           Skiptracer.Eval.Data  (Ctx (..), State (..))
 import qualified Skiptracer.Eval.Let   as Let
@@ -143,7 +143,7 @@ eval (State h (CasMatCtx (Alt p mg ex : rs) : cs) c)
             Just ms ->
                 -- Check for case guard
                 case mg of
-                    Just gd -> State h (CasGrdCtx ms ex c rs : cs) gd
+                    Just gd -> State h (CasGrdCtx p ex c rs : cs) gd
                     Nothing ->
                         let (bs, h1) = Heap.allocWithName ms h
                             bb       = Bind.bind [] bs ex
@@ -157,9 +157,10 @@ eval (State h (CasMatCtx (Alt p mg ex : rs) : cs) c)
 --
 
 -- TODO: again, a sanity-check for all values would be nice
-eval (State h (CasGrdCtx ms ex c rs : cs) (Log g))
+eval (State h (CasGrdCtx p ex c rs : cs) (Log g))
     | g =
-        let (bs, h1) = Heap.allocWithName ms h
+        let ms       = fromJust (Match.match c p)
+            (bs, h1) = Heap.allocWithName ms h
             bb       = Bind.bind [] bs ex
         in  State h1 cs bb
     | otherwise = State h (CasMatCtx rs : cs) c

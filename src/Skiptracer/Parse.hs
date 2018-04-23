@@ -1,7 +1,7 @@
 module Skiptracer.Parse (
     parse,
-    parseGhc,
-    parseGhcWithAnnotations
+    parseSimpleGhc,
+    parseGhc
 ) where
 
 import           Data.Maybe                   (mapMaybe)
@@ -12,23 +12,21 @@ import           Skiptracer.Syntax            (Alt (..), Exp (..), Pat (..))
 parse :: String -> Exp
 parse = toExp . parseGhc
 
-parseGhc :: String -> Shs.Module
-parseGhc src = case Shs.parseModule src of
+parseGhc :: String -> Hs.Module Hs.SrcSpanInfo
+parseGhc src = case Hs.parseModule src of
     Hs.ParseOk a       -> a
     Hs.ParseFailed a s -> error ("ERROR: " ++ s)
 
-parseGhcWithAnnotations :: String -> Hs.Module Hs.SrcSpanInfo
-parseGhcWithAnnotations src = case Hs.parseModule src of
+parseSimpleGhc :: String -> Shs.Module
+parseSimpleGhc src = case Shs.parseModule src of
     Hs.ParseOk a       -> a
     Hs.ParseFailed a s -> error ("ERROR: " ++ s)
-
 
 class ToExp a where toExp :: a -> Exp
 
 instance ToExp (Hs.Module l) where
     toExp (Hs.Module _ _ _ _ ds) = Let (mapMaybe toDec ds) (Var "main")
 
--- TODO: NegApp
 instance ToExp (Hs.Exp l) where
     toExp (Hs.Paren _ e) = toExp e
 
@@ -46,7 +44,7 @@ instance ToExp (Hs.Exp l) where
 
     -- Con "(,)"
     toExp (Hs.Tuple _ _ es) =
-        Con ("(" ++ replicate (length es) ',' ++ ")") (map toExp es)
+        Con (replicate (length es) ',') (map toExp es)
 
     -- Lam
     toExp (Hs.Lambda _ ps e) = Lam Nothing (map toPat ps) (toExp e)
@@ -83,7 +81,7 @@ instance ToExp (Hs.QOp l) where
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.ListCon _))) = Con "[]" []
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.Cons _)))    = Con ":" []
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.TupleCon _ _ a))) =
-        Con ("(" ++ replicate a ',' ++ ")") []
+        Con (replicate a ',') []
 
 
 instance ToExp (Hs.Op l) where

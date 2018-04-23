@@ -49,6 +49,6 @@ instance Refs Ctx where
     refs (PopSndCtx _ ex)      = refs ex
     refs (IteCtx te fe)        = refs te ++ refs fe
     refs (CasMatCtx as)        = mapRefs as
-    refs (CasGrdCtx bs m c as) = concatMap (refs . snd) bs ++ refs m ++ refs c ++ mapRefs as
+    refs (CasGrdCtx p m c as)  = refs m ++ refs c ++ mapRefs as
     refs (RefCtx a)            = [a]
     refs _                     = []

@@ -93,7 +93,7 @@ data Ctx
     --
     -- If it fails, we go back to evaluating the next expression in CasMatCtx.
     | CasGrdCtx
-        [(String, Exp)] -- ^ Matched bindings
+        Pat             -- ^ Current pattern (assumed to be matchable)
         Exp             -- ^ Current branch
         Exp             -- ^ Case condition (in case of failure)
         [Alt]           -- ^ Alts (in case of failure)

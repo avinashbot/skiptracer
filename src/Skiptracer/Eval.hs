@@ -71,6 +71,8 @@ eval (State h (ConMatCtx n es p us : cs) ex)
 -- AppCtx
 --
 
+eval (State h (AppCtx [a] : cs) (Pop op)) = State h (cs) (Lam Nothing [PVar "x"] (App (Pop op) [a, Var "x"]))
+
 eval (State h (AppCtx [a, b] : cs) (Pop op)) = State h (PopFstCtx op b : cs) a
 
 eval (State h (AppCtx (a : as) : cs) ex)

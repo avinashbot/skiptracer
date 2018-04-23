@@ -18,7 +18,7 @@ showTrace (Trace (State h cs e) trc) =
         uhe      = unHeap h ep
         pp       = prettyPrint uhe
         binds    = mark uhe h
-        shBinds  = unlines $ mapMaybe (\(n, a) -> let (_, e) = deref a h in if isValue e then Nothing else Just ("  " ++ n ++ show a ++ " = " ++ prettyPrint (unHeap h e))) binds
+        shBinds  = unlines $ mapMaybe (\(n, a) -> let (_, e) = deref a h in if isValue e then Nothing else Just ("    " ++ n ++ show a ++ " = " ++ prettyPrint (unHeap h e))) binds
         bindStr  = if not (null binds) then "\nwhere\n" ++ shBinds else "\n"
     in  if tr
         then intercalate "\n" (map ("... " ++) (lines pp)) ++ bindStr ++ "\n" ++ show trc

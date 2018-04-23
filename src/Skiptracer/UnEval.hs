@@ -49,8 +49,8 @@ unCtx :: Exp -> Ctx -> Exp
 unCtx e (ConMatCtx n es _ ps) = Con n (es ++ [e] ++ map snd ps)
 unCtx e (AppCtx as)           = App e as
 unCtx e (AppArgCtx fn as)     = App fn (e : as)
-unCtx e (PopFstCtx op sn)     = App (Var op) [e, sn]
-unCtx e (PopSndCtx op fs)     = App (Var op) [fs, e]
+unCtx e (PopFstCtx op sn)     = App (Pop op) [e, sn]
+unCtx e (PopSndCtx op fs)     = App (Pop op) [fs, e]
 unCtx e (IteCtx te fe)        = Ite e te fe
 unCtx e (CasMatCtx as)        = Cas e as
 unCtx e (CasGrdCtx p b c as)  = Cas c (Alt p (Just e) b : as)

@@ -18,6 +18,7 @@ prettyPrint :: Exp -> String
 prettyPrint = Hs.prettyPrint . expr
 
 expr :: Exp -> Hs.Exp Hs.SrcSpanInfo
+expr (Pop n)                 = Hs.Var l (qname n)
 expr (Var n)                 = Hs.Var l (qname n)
 expr (Num n)                 | n >= 0 = Hs.Lit l (Hs.Int l (fromIntegral n) (show n))
                              | n < 0  = Hs.NegApp l (Hs.Lit l (Hs.Int l (fromIntegral (negate n)) (show n)))
@@ -25,9 +26,9 @@ expr (Log True)              = Hs.Con l (qname "True")
 expr (Log False)             = Hs.Con l (qname "False")
 expr (Con n [])              = Hs.Con l (qname n)
 expr (Con n es)              = expr (App (Con n []) es)
+expr (App (Pop x) [a, b])    = Hs.InfixApp l (expr a) (qop x) (expr b)
 expr (Lam (Just n) _ _)      = Hs.Var l (qname n)
 expr (Lam Nothing ps e)      = Hs.Lambda l (map pat ps) (expr e)
-expr (App (Var x) [a, b])    | Syntax.isPrimOp x = Hs.InfixApp l (expr a) (qop x) (expr b)
 expr (App (Con x []) [a, b]) | x == ":" = Hs.InfixApp l (expr a) (qop x) (expr b)
 expr (App a bs)              = foldl (Hs.App l) (expr a) (map expr bs)
 expr (Ite c t f)             = Hs.If l (expr c) (expr t) (expr f)

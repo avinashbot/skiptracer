@@ -54,8 +54,8 @@ instance ToExp (Hs.Exp l) where
     toExp (Hs.InfixApp _ e1 op e2) = App (toExp op) [toExp e1, toExp e2]
     toExp (Hs.App _ f1 a1) =
         case toExp f1 of
-            App (Var n) a2 -> App (Var n) (a2 ++ [toExp a1])
-            f2             -> App f2 [toExp a1]
+            App fn a2 | Syntax.isVar fn || Syntax.isValue fn -> App fn (a2 ++ [toExp a1])
+            f2        -> App f2 [toExp a1]
     toExp (Hs.LeftSection _ e o) =
         Lam Nothing [PVar "x"] (App (toExp o) [Var "x", toExp e])
     toExp (Hs.RightSection _ o e) =
@@ -71,13 +71,20 @@ instance ToExp (Hs.Exp l) where
     toExp (Hs.Let _ (Hs.BDecls _ bs) e) = Let (mapMaybe toDec bs) (toExp e)
 
     -- Var
-    toExp (Hs.Var _ (Hs.UnQual _ n)) | Syntax.isPrimOp (name n) = Lam (Just (name n)) [PVar "x", PVar "y"] (App (Var (name n)) [Var "x", Var "y"])
-    toExp (Hs.Var _ (Hs.UnQual _ n)) = Var (name n)
+    toExp (Hs.Var _ (Hs.UnQual _ n))
+        | Syntax.isPrimOp v = Pop v
+        | otherwise         = Var v
+      where
+        v = name n
 
 
 instance ToExp (Hs.QOp l) where
-    toExp (Hs.QVarOp _ (Hs.UnQual _ n))               = Var (name n)
-    toExp (Hs.QConOp _ (Hs.UnQual _ n))               = Con (name n) []
+    toExp (Hs.QConOp _ (Hs.UnQual _ n)) = Con (name n) []
+    toExp (Hs.QVarOp _ (Hs.UnQual _ n))
+        | Syntax.isPrimOp v = Pop v
+        | otherwise         = Var v
+      where
+        v = name n
 
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.UnitCon _))) = Con "()" []
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.ListCon _))) = Con "[]" []
@@ -87,9 +94,12 @@ instance ToExp (Hs.QOp l) where
 
 
 instance ToExp (Hs.Op l) where
-    toExp (Hs.VarOp _ n) = Var (name n)
     toExp (Hs.ConOp _ n) = Con (name n) []
-
+    toExp (Hs.VarOp _ n)
+        | Syntax.isPrimOp v = Pop v
+        | otherwise         = Var v
+      where
+        v = name n
 
 name :: Hs.Name l -> String
 name (Hs.Ident _ s)  = s

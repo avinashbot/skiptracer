@@ -71,8 +71,7 @@ eval (State h (ConMatCtx n es p us : cs) ex)
 -- AppCtx
 --
 
-eval (State h (AppCtx [a, b] : cs) (Var op))
-    | Syntax.isPrimOp op = State h (PopFstCtx op b : cs) a
+eval (State h (AppCtx [a, b] : cs) (Pop op)) = State h (PopFstCtx op b : cs) a
 
 eval (State h (AppCtx (a : as) : cs) ex)
     | Syntax.isValue ex = State h (AppArgCtx ex as : cs) a

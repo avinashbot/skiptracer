@@ -52,6 +52,8 @@ data Exp
     | Con String [Exp]
     -- | Lambda Expression
     | Lam (Maybe String) [Pat] Exp
+    -- | Primitive Operation (e.g. +, -)
+    | Pop String
 
     -- | Function application.
     --
@@ -88,6 +90,7 @@ isValue Con{}   = True
 isValue Num{}   = True
 isValue Log{}   = True
 isValue Lam{}   = True
+isValue Pop{}   = True
 isValue _       = False
 
 -- | Is this expression an unbound variable?

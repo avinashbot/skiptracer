@@ -25,6 +25,7 @@ unEvalUpto _ e []                 = (False, e)
 unEvalUpto 0 e _                  = (True, e)
 unEvalUpto n e (RefCtx _ : cs)    = unEvalUpto n e cs
 unEvalUpto n e (PatMatCtx _ : cs) = unEvalUpto n e cs
+unEvalUpto n e (NrmCtx : cs)      = unEvalUpto n e cs
 unEvalUpto n e (c : cs)           = unEvalUpto (n - 1) (unCtx e c) cs
 
 -- | Remove value expression from heap and reinsert them directly into the
@@ -54,5 +55,7 @@ unCtx e (PopSndCtx op fs)     = App (Pop op) [fs, e]
 unCtx e (IteCtx te fe)        = Ite e te fe
 unCtx e (CasMatCtx as)        = Cas e as
 unCtx e (CasGrdCtx p b c as)  = Cas c (Alt p (Just e) b : as)
+unCtx e (NrmConCtx s e1 e2)   = Con s (e1 ++ [e] ++ e2)
+unCtx e NrmCtx                = e
 unCtx e (RefCtx _)            = e
 unCtx e (PatMatCtx _)         = e

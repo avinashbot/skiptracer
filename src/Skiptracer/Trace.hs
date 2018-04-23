@@ -64,6 +64,8 @@ traceAll t (a@(State _ (PopSndCtx n _ : _) e):as)
             (TraceAppPrimOps ops) -> Trace a (TraceAppPrimOps (n : ops)) : trs
             _                     -> Trace a (TraceAppPrimOps [n]) : tr : trs
 -- Function application
+traceAll t (a@(State _ (AppCtx _ : _) (Var n)):as)
+    | shouldTraceFn t n = Trace a (TraceAppFn n) : traceAll t as
 traceAll t (a@(State _ (AppCtx _ : _) (Con n [])):as)
     | shouldTraceFn t n = Trace a (TraceAppFn n) : traceAll t as
 traceAll t (a@(State _ (AppCtx _ : _) (Lam (Just n) _ _)):as)

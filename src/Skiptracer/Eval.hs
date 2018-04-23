@@ -71,7 +71,9 @@ eval (State h (ConMatCtx n es p us : cs) ex)
 -- AppCtx
 --
 
-eval (State h (AppCtx [a] : cs) (Pop op)) = State h (cs) (Lam Nothing [PVar "x"] (App (Pop op) [a, Var "x"]))
+eval (State h (AppCtx [a] : cs) (Var "print")) = State h (NrmCtx : cs) a
+
+eval (State h (AppCtx [a] : cs) (Pop op)) = State h cs (Lam Nothing [PVar "x"] (App (Pop op) [a, Var "x"]))
 
 eval (State h (AppCtx [a, b] : cs) (Pop op)) = State h (PopFstCtx op b : cs) a
 
@@ -163,6 +165,22 @@ eval (State h (CasGrdCtx p ex c rs : cs) (Log g))
 
 eval (State _ (CasGrdCtx{} : _) ex)
     | Syntax.isValue ex = error "non-boolean value returned by case guard"
+
+--
+-- NrmCtx
+--
+
+eval (State h (NrmCtx : cs) (Con n (e:es))) = State h (NrmCtx : NrmConCtx n [] es : cs) e
+eval (State h (NrmCtx : cs) e) | Syntax.isValue e = State h cs e
+
+--
+-- NrmConCtx
+--
+
+eval (State h (NrmConCtx n dn [] : cs) e)
+    | Syntax.isValue e = State h cs (Con n (dn ++ [e]))
+eval (State h (NrmConCtx n dn (r:rm) : cs) e)
+    | Syntax.isValue e = State h (NrmCtx : NrmConCtx n (dn ++ [e]) rm : cs) r
 
 --
 -- RefCtx

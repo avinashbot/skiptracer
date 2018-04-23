@@ -26,7 +26,7 @@ showTrace (Trace (State h cs e) trc) =
 
 main :: IO ()
 main = do
-    file <- readFile "examples/map_fold.hs"
+    file <- readFile "examples/print_map.hs"
     let state = fromExp (parse file)
     let opts = TraceOpts [] Nothing True True
     let traces = trace opts state

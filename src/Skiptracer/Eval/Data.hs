@@ -106,5 +106,14 @@ data Ctx
     | RefCtx
         Int -- ^ The heap address to update
 
+    -- | Executing a value to normal form.
+    | NrmCtx
+
+    -- | Executing a Con to normal form.
+    | NrmConCtx
+        String -- ^ The constructor name.
+        [Exp]  -- ^ The evaluated params.
+        [Exp]  -- ^ The remaining params.
+
     deriving Show
 

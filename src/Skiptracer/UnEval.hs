@@ -1,5 +1,6 @@
 module Skiptracer.UnEval (
-    unEval
+    unEval,
+    unEvalUpto
 ) where
 
 import           Skiptracer.Eval   (Ctx (..), State (..))
@@ -9,6 +10,17 @@ import           Skiptracer.Syntax (Alt (..), Exp (..))
 -- | Generate an Exp from an Exp surrounded by Ctxs.
 unEval :: Exp -> [Ctx] -> Exp
 unEval = foldl unCtx
+
+-- | Uneval upto a certain number of contexts, also returning whether the
+-- expression was truncated early.
+--
+-- RefCtx and PatMatCtx are not counted since they don't touch the expression.
+unEvalUpto :: Int -> Exp -> [Ctx] -> (Bool, Exp)
+unEvalUpto _ e []                 = (False, e)
+unEvalUpto 0 e _                  = (True, e)
+unEvalUpto n e (RefCtx _ : cs)    = unEvalUpto n e cs
+unEvalUpto n e (PatMatCtx _ : cs) = unEvalUpto n e cs
+unEvalUpto n e (c : cs)           = unEvalUpto (n - 1) (unCtx e c) cs
 
 -- | Unwrap an Exp in the context of a Ctx.
 unCtx :: Exp -> Ctx -> Exp

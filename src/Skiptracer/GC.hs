@@ -31,6 +31,7 @@ mapRefs = concatMap refs
 instance Refs Exp where
     refs (Ref n i)   = [(n, i)]
     refs (Con _ es)  = mapRefs es
+    refs (Lam _ _ e) = refs e
     refs (App f es)  = refs f ++ mapRefs es
     refs (Ite c t f) = refs c ++ refs t ++ refs f
     refs (Cas e as)  = refs e ++ mapRefs as

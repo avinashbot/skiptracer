@@ -30,20 +30,19 @@ unEvalUpto n e (c : cs)           = unEvalUpto (n - 1) (unCtx e c) cs
 
 -- | Remove value expression from heap and reinsert them directly into the
 -- expression.
-unHeap :: Heap Exp -> Exp -> Exp
-unHeap h (Con n es)         = Con n (map (unHeap h) es)
-unHeap h (Lam (Just n) _ _) = Var n
-unHeap h (Lam Nothing ps e) = Lam Nothing ps (unHeap h e)
-unHeap h (App e as)         = App (unHeap h e) (map (unHeap h) as)
-unHeap h (Ite c t f)        = Ite (unHeap h c) (unHeap h t) (unHeap h f)
-unHeap h (Cas e as)         = Cas (unHeap h e) (map (\(Alt p me e) -> Alt p (fmap (unHeap h) me) (unHeap h e)) as)
-unHeap h (Let bs e)         = Let (map (\(a, b) -> (a, unHeap h b)) bs) (unHeap h e)
-unHeap h (Ref s a)          | Syntax.isValue e = e where (_, e) = Heap.deref a h
-unHeap _ e                  = e
+unHeap :: [Int] -> Heap Exp -> Exp -> Exp
+unHeap s h (Con n es)   = Con n (map (unHeap s h) es)
+unHeap s h (Lam n ps e) = Lam n ps (unHeap s h e)
+unHeap s h (App e as)   = App (unHeap s h e) (map (unHeap s h) as)
+unHeap s h (Ite c t f)  = Ite (unHeap s h c) (unHeap s h t) (unHeap s h f)
+unHeap s h (Cas e as)   = Cas (unHeap s h e) (map (unHeapAlt s h) as)
+unHeap s h (Let bs e)   = Let (map (\(a, b) -> (a, unHeap s h b)) bs) (unHeap s h e)
+unHeap s h (Ref n a)    | a `notElem` s && Syntax.isValue e = unHeap (a:s) h e where (_, e) = Heap.deref a h
+unHeap _ _ e            = e
 
 -- Variant of unHeap for Alts.
-unHeapAlt :: Heap Exp -> Alt -> Alt
-unHeapAlt h (Alt p me e) = Alt p (fmap (unHeap h) me) (unHeap h e)
+unHeapAlt :: [Int] -> Heap Exp -> Alt -> Alt
+unHeapAlt s h (Alt p me e) = Alt p (fmap (unHeap s h) me) (unHeap s h e)
 
 -- | Unwrap an Exp in the context of a Ctx.
 unCtx :: Exp -> Ctx -> Exp

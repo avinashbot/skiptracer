@@ -11,6 +11,7 @@ import           Skiptracer.Pretty    (prettyPrint)
 import           Skiptracer.Syntax    (isValue)
 import           Skiptracer.Trace     (Trace (..), TraceOpts (..), trace)
 import           Skiptracer.UnEval    (unEvalUpto, unHeap)
+import           System.Environment   (getArgs)
 
 showTrace :: Trace -> String
 showTrace (Trace (State h cs e) trc) =
@@ -26,9 +27,10 @@ showTrace (Trace (State h cs e) trc) =
 
 main :: IO ()
 main = do
-    file <- readFile "examples/print_map.hs"
+    [fname] <- getArgs
+    file <- readFile fname
     let state = fromExp (parse file)
-    let opts = TraceOpts [] Nothing True True
+    let opts = TraceOpts [] Nothing False True
     let traces = trace opts state
 
     putStrLn $ intercalate "\n\n" $ map showTrace traces

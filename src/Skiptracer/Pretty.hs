@@ -25,7 +25,8 @@ expr (Num n)                 | n >= 0 = Hs.Lit l (Hs.Int l (fromIntegral n) (sho
 expr (Log True)              = Hs.Con l (qname "True")
 expr (Log False)             = Hs.Con l (qname "False")
 expr (Con n [])              = Hs.Con l (qname n)
-expr (Con n es)              = expr (App (Con n []) es)
+expr (Con n es)              | all (== ',') n = Hs.Tuple l Hs.Boxed (map expr es)
+                             | otherwise      = expr (App (Con n []) es)
 expr (Lam (Just n) _ _)      = Hs.Var l (qname n)
 expr (Lam Nothing ps e)      = Hs.Lambda l (map pat ps) (expr e)
 expr (App (Pop x) [a, b])    = Hs.InfixApp l (expr a) (qop x) (expr b)
@@ -46,7 +47,8 @@ decl (p, e)                 = Hs.PatBind l (pat p) (Hs.UnGuardedRhs l (expr e)) 
 
 pat :: Pat -> Hs.Pat Hs.SrcSpanInfo
 pat (PCon ":" [p, q]) = Hs.PInfixApp l (pat p) (qname ":") (pat q)
-pat (PCon n ps)       = Hs.PApp l (qname n) (map pat ps)
+pat (PCon n ps)       | all (== ',') n = Hs.PTuple l Hs.Boxed (map pat ps)
+                      | otherwise      = Hs.PApp l (qname n) (map pat ps)
 pat (PPat n p)        = Hs.PAsPat l (name n) (pat p)
 pat (PNum i)          = Hs.PLit l (if i < 0 then Hs.Negative l else Hs.Signless l) (Hs.Int l (fromIntegral i) (show i))
 pat (PLog True)       = Hs.PApp l (qname "True") []

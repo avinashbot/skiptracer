@@ -119,9 +119,9 @@ toPat (Hs.PApp _ (Hs.UnQual _ (Hs.Ident _ "False")) []) = PLog False
 toPat (Hs.PApp _ (Hs.Special _ (Hs.ListCon _)) ps) = PCon "[]" (map toPat ps)
 toPat (Hs.PApp _ (Hs.Special _ (Hs.Cons _)) ps)    = PCon ":" (map toPat ps)
 toPat (Hs.PApp _ (Hs.Special _ (Hs.TupleCon _ _ a)) ps) =
-    PCon ("(" ++ replicate a ',' ++ ")") (map toPat ps)
+    PCon (replicate a ',') (map toPat ps)
 toPat (Hs.PTuple _ _ ps) =
-    PCon ("(" ++ replicate (length ps) ',' ++ ")") (map toPat ps)
+    PCon (replicate (length ps) ',') (map toPat ps)
 toPat (Hs.PList _ [])     = PCon "[]" []
 toPat (Hs.PList l (p:ps)) = PCon ":" [toPat p, toPat (Hs.PList l ps)]
 

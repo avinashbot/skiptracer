@@ -61,7 +61,7 @@ traceAll t (a@(State _ (PopSndCtx n _ : _) e):as)
     | shouldTraceFn t n && Syntax.isValue e =
         let (tr@(Trace _ nt) : trs) = traceAll t as
         in  case nt of
-            (TraceAppPrimOps ops) -> Trace a (TraceAppPrimOps (n : ops)) : trs
+            (TraceAppPrimOps ops) | aggrPrimOp t -> Trace a (TraceAppPrimOps (n : ops)) : trs
             _                     -> Trace a (TraceAppPrimOps [n]) : tr : trs
 -- Function application
 traceAll t (a@(State _ (AppCtx _ : _) (Var n)):as)

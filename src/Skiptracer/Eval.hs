@@ -90,7 +90,7 @@ eval (State h (AppArgCtx (Con n es) as : cs) ex) =
 eval (State h (AppArgCtx (Lam n (p:ps) bd) ag : cs) ex)
     | Match.matchable ex p =
         let bs       = fromMaybe
-                           (error "argument does not match lambda parameter")
+                           (error $ "argument " ++ show ex ++ " does not match lambda parameter " ++ show p)
                            (Match.match ex p)
             (as, h1) = Heap.allocWithName bs h
             bb       = Bind.bind [] as bd

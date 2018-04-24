@@ -24,6 +24,11 @@ expr (Num n)                         | n >= 0 = Hs.Lit l (Hs.Int l (fromIntegral
                                      | n < 0  = Hs.NegApp l (Hs.Lit l (Hs.Int l (fromIntegral (negate n)) (show n)))
 expr (Log True)                      = Hs.Con l (qname "True")
 expr (Log False)                     = Hs.Con l (qname "False")
+expr (Con "[]" [])                   = Hs.List l []
+expr (Con ":" [a, b])                = case expr b of
+                                           (Hs.List _ []) -> Hs.List l [expr a]
+                                           (Hs.List _ es) -> Hs.List l (expr a : es)
+                                           _              -> Hs.InfixApp l (expr a) (qop ":") (expr b)
 expr (Con n [])                      = Hs.Con l (qname n)
 expr (Con n es)                      | all (== ',') n = Hs.Tuple l Hs.Boxed (map expr es)
                                      | otherwise      = expr (App (Con n []) es)

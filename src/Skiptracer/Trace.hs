@@ -71,7 +71,7 @@ traceAll t (a@(State _ (AppCtx _ : _) (Con n [])):as)
 traceAll t (a@(State _ (AppCtx _ : _) (Lam (Just n) _ _)):as)
     | shouldTraceFn t n = Trace a (TraceAppFn n) : traceAll t as
 traceAll t (a@(State _ (AppCtx _ : _) (Lam Nothing _ _)):as)
-    = Trace a TraceAppLam : traceAll t as
+    | shouldTraceFn t "lambda" = Trace a TraceAppLam : traceAll t as
 -- If and Cases
 traceAll t (a@(State _ _ Ite{}):as) | shouldTraceFn t "if"   = Trace a TraceIte : traceAll t as
 traceAll t (a@(State _ _ Cas{}):as) | shouldTraceFn t "case" = Trace a TraceCas : traceAll t as

@@ -57,9 +57,9 @@ instance ToExp (Hs.Exp l) where
             App fn a2 | Syntax.isVar fn || Syntax.isValue fn -> App fn (a2 ++ [toExp a1])
             f2        -> App f2 [toExp a1]
     toExp (Hs.LeftSection _ e o) =
-        Lam Nothing [PVar "x"] (App (toExp o) [Var "x", toExp e])
+        Lam Nothing [PVar "_r"] (App (toExp o) [toExp e, Var "_r"])
     toExp (Hs.RightSection _ o e) =
-        Lam Nothing [PVar "x"] (App (toExp o) [toExp e, Var "x"])
+        Lam Nothing [PVar "_l"] (App (toExp o) [Var "_l", toExp e])
 
     -- Ite
     toExp (Hs.If _ cd lt rt) = Ite (toExp cd) (toExp lt) (toExp rt)
@@ -108,8 +108,7 @@ name (Hs.Symbol _ s) = s
 toPat :: Hs.Pat l -> Pat
 toPat (Hs.PParen _ p)             = toPat p
 toPat (Hs.PWildCard _)            = PWld
-toPat (Hs.PVar _ (Hs.Ident _ s))  = PVar s
-toPat (Hs.PVar _ (Hs.Symbol _ s)) = PVar s
+toPat (Hs.PVar _ n)               = PVar (name n)
 toPat (Hs.PLit _ (Hs.Signless _) (Hs.Int _ i _)) = PNum (fromIntegral i)
 toPat (Hs.PLit _ (Hs.Negative _) (Hs.Int _ i _)) = PNum (negate (fromIntegral i))
 toPat (Hs.PAsPat _ n p) = PPat (name n) (toPat p)

@@ -9,7 +9,7 @@ module Skiptracer.Pretty (
     prettyPrint
 ) where
 
-import           Data.Char             (isSymbol, isUpper)
+import           Data.Char             (isAlphaNum, isSymbol, isUpper)
 import qualified Language.Haskell.Exts as Hs
 import           Skiptracer.Syntax     (Alt (..), Exp (..), Pat (..))
 import qualified Skiptracer.Syntax     as Syntax
@@ -18,24 +18,25 @@ prettyPrint :: Exp -> String
 prettyPrint = Hs.prettyPrint . expr
 
 expr :: Exp -> Hs.Exp Hs.SrcSpanInfo
-expr (Pop n)                 = Hs.Var l (qname n)
-expr (Var n)                 = Hs.Var l (qname n)
-expr (Num n)                 | n >= 0 = Hs.Lit l (Hs.Int l (fromIntegral n) (show n))
-                             | n < 0  = Hs.NegApp l (Hs.Lit l (Hs.Int l (fromIntegral (negate n)) (show n)))
-expr (Log True)              = Hs.Con l (qname "True")
-expr (Log False)             = Hs.Con l (qname "False")
-expr (Con n [])              = Hs.Con l (qname n)
-expr (Con n es)              | all (== ',') n = Hs.Tuple l Hs.Boxed (map expr es)
-                             | otherwise      = expr (App (Con n []) es)
-expr (Lam (Just n) _ _)      = Hs.Var l (qname n)
-expr (Lam Nothing ps e)      = Hs.Lambda l (map pat ps) (expr e)
-expr (App (Pop x) [a, b])    = Hs.InfixApp l (expr a) (qop x) (expr b)
-expr (App (Con x []) [a, b]) | x == ":" = Hs.InfixApp l (expr a) (qop x) (expr b)
-expr (App a bs)              = foldl (Hs.App l) (expr a) (map expr bs)
-expr (Ite c t f)             = Hs.If l (expr c) (expr t) (expr f)
-expr (Cas e as)              = Hs.Case l (expr e) (map alt as)
-expr (Let ms e)              = Hs.Let l (Hs.BDecls l (map decl ms)) (expr e)
-expr (Ref n i)               = Hs.Var l (qname (n ++ show i))
+expr (Pop n)                         = Hs.Var l (qname n)
+expr (Var n)                         = Hs.Var l (qname n)
+expr (Num n)                         | n >= 0 = Hs.Lit l (Hs.Int l (fromIntegral n) (show n))
+                                     | n < 0  = Hs.NegApp l (Hs.Lit l (Hs.Int l (fromIntegral (negate n)) (show n)))
+expr (Log True)                      = Hs.Con l (qname "True")
+expr (Log False)                     = Hs.Con l (qname "False")
+expr (Con n [])                      = Hs.Con l (qname n)
+expr (Con n es)                      | all (== ',') n = Hs.Tuple l Hs.Boxed (map expr es)
+                                     | otherwise      = expr (App (Con n []) es)
+expr (Lam (Just n) _ _)              = Hs.Var l (qname n)
+expr (Lam Nothing ps e)              = Hs.Lambda l (map pat ps) (expr e)
+expr (App (Pop x) [a, b])            = Hs.InfixApp l (expr a) (qop x) (expr b)
+expr (App (Con x []) [a, b])         | all (not . isAlphaNum) x = Hs.InfixApp l (expr a) (qop x) (expr b)
+expr (App (Lam (Just n) _ _) [a, b]) | all (not . isAlphaNum) n = Hs.InfixApp l (expr a) (qop n) (expr b)
+expr (App a bs)                      = foldl (Hs.App l) (expr a) (map expr bs)
+expr (Ite c t f)                     = Hs.If l (expr c) (expr t) (expr f)
+expr (Cas e as)                      = Hs.Case l (expr e) (map alt as)
+expr (Let ms e)                      = Hs.Let l (Hs.BDecls l (map decl ms)) (expr e)
+expr (Ref n i)                       = Hs.Var l (qname (n ++ show i))
 
 alt :: Alt -> Hs.Alt Hs.SrcSpanInfo
 alt (Alt p Nothing e)  = Hs.Alt l (pat p) (Hs.UnGuardedRhs l (expr e)) Nothing
@@ -69,8 +70,8 @@ qname n
 
 name :: String -> Hs.Name Hs.SrcSpanInfo
 name n
-    | all isSymbol n = Hs.Symbol l n
-    | otherwise      = Hs.Ident l n
+    | all (not . isAlphaNum) n = Hs.Symbol l n
+    | otherwise                = Hs.Ident l n
 
 l :: Hs.SrcSpanInfo
 l = Hs.noSrcSpan

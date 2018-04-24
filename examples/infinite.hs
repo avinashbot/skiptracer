@@ -1,7 +1,7 @@
 map' f ls =
     case ls of
         []     -> []
-        (x:xs) -> (f x) : (map' f xs)
+        (x:xs) -> f x : map' f xs
 
 take' n ls =
     if   n <= 0

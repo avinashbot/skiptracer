@@ -26,6 +26,10 @@ expr (Chr c)                         = Hs.Lit l (Hs.Char l c [c])
 expr (Log True)                      = Hs.Con l (qname "True")
 expr (Log False)                     = Hs.Con l (qname "False")
 expr (Con "[]" [])                   = Hs.List l []
+expr (Con ":" [Chr a, b])            = case expr b of
+                                            (Hs.List _ [])                -> Hs.Lit l (Hs.String l [a] [a])
+                                            (Hs.Lit _ (Hs.String _ as _)) -> Hs.Lit l (Hs.String l (a:as) (a:as))
+                                            _                             -> Hs.InfixApp l (Hs.Lit l (Hs.Char l a [a])) (qop ":") (expr b)
 expr (Con ":" [a, b])                = case expr b of
                                            (Hs.List _ []) -> Hs.List l [expr a]
                                            (Hs.List _ es) -> Hs.List l (expr a : es)

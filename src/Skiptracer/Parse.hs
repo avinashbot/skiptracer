@@ -1,6 +1,5 @@
 module Skiptracer.Parse (
     parse,
-    parseSimpleGhc,
     parseGhc
 ) where
 

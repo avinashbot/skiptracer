@@ -43,6 +43,15 @@ instance ToExp (Hs.Exp l) where
     toExp (Hs.List _ [])     = Con "[]" []
     toExp (Hs.List l (e:es)) = Con ":" [toExp e, toExp (Hs.List l es)]
 
+    -- EnumFrom...
+    toExp (Hs.EnumFrom _ a)           = App (Var "enumFrom") [toExp a]
+    toExp (Hs.EnumFromTo _ a b)       = App (Var "enumFromTo") [toExp a, toExp b]
+    toExp (Hs.EnumFromThen _ a b)     = App (Var "enumFromThen") [toExp a, toExp b]
+    toExp (Hs.EnumFromThenTo _ a b c) = App (Var "enumFromThenTo") [toExp a, toExp b, toExp c]
+
+    -- Do Notation
+    toExp (Hs.Do _ ss) = desugarDo ss
+
     -- Con "(,)"
     toExp (Hs.Tuple _ _ es) =
         Con (replicate (length es) ',') (map toExp es)
@@ -76,7 +85,6 @@ instance ToExp (Hs.Exp l) where
         | otherwise         = Var v
       where
         v = name n
-
 
 instance ToExp (Hs.QOp l) where
     toExp (Hs.QConOp _ (Hs.UnQual _ n)) = Con (name n) []
@@ -137,3 +145,12 @@ toDec (Hs.FunBind _ [Hs.Match _ n ps (Hs.UnGuardedRhs _ e) Nothing]) =
 toDec (Hs.PatBind _ p (Hs.UnGuardedRhs _ e) Nothing) =
     Just (toPat p, toExp e)
 toDec _ = Nothing
+
+desugarDo :: [Hs.Stmt l] -> Exp
+desugarDo [Hs.Qualifier _ eo] = toExp eo
+desugarDo (Hs.Qualifier _ eo : ei) =
+    App (Var ">>") [toExp eo, desugarDo ei]
+desugarDo (Hs.Generator _ p eo : ei) =
+    App (Var ">>=") [toExp eo, Lam Nothing [toPat p] (desugarDo ei)]
+desugarDo (Hs.LetStmt _ (Hs.BDecls _ bs) : ei) =
+    Let (mapMaybe toDec bs) (desugarDo ei)

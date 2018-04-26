@@ -35,6 +35,7 @@ expr (Con n es)                      | all (== ',') n = Hs.Tuple l Hs.Boxed (map
 expr (Lam (Just n) _ _)              = Hs.Var l (qname n)
 expr (Lam Nothing ps e)              = Hs.Lambda l (map pat ps) (expr e)
 expr (App (Pop x) [a, b])            = Hs.InfixApp l (expr a) (qop x) (expr b)
+expr (App (Var x) [a, b])            | all (not . isAlphaNum) x = Hs.InfixApp l (expr a) (qop x) (expr b)
 expr (App (Con x []) [a, b])         | all (not . isAlphaNum) x = Hs.InfixApp l (expr a) (qop x) (expr b)
 expr (App (Lam (Just n) _ _) [a, b]) | all (not . isAlphaNum) n = Hs.InfixApp l (expr a) (qop n) (expr b)
 expr (App a bs)                      = foldl (Hs.App l) (expr a) (map expr bs)

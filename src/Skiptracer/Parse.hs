@@ -4,22 +4,16 @@ module Skiptracer.Parse (
     parseGhc
 ) where
 
-import           Data.Maybe                   (mapMaybe)
-import qualified Language.Haskell.Exts        as Hs
-import qualified Language.Haskell.Exts.Simple as Shs
-import           Skiptracer.Syntax            (Alt (..), Exp (..), Pat (..))
-import qualified Skiptracer.Syntax            as Syntax
+import           Data.Maybe            (mapMaybe)
+import qualified Language.Haskell.Exts as Hs
+import           Skiptracer.Syntax     (Alt (..), Exp (..), Pat (..))
+import qualified Skiptracer.Syntax     as Syntax
 
 parse :: String -> Exp
 parse = toExp . parseGhc
 
 parseGhc :: String -> Hs.Module Hs.SrcSpanInfo
 parseGhc src = case Hs.parseModule src of
-    Hs.ParseOk a       -> a
-    Hs.ParseFailed a s -> error ("ERROR: " ++ s)
-
-parseSimpleGhc :: String -> Shs.Module
-parseSimpleGhc src = case Shs.parseModule src of
     Hs.ParseOk a       -> a
     Hs.ParseFailed a s -> error ("ERROR: " ++ s)
 

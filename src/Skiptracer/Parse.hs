@@ -30,15 +30,14 @@ instance ToExp (Hs.Exp l) where
 
     -- Char/String
     toExp (Hs.Lit _ (Hs.Char _ c _))               = Chr c
-    toExp (Hs.Lit l (Hs.String _ s _))             = toExp $ Hs.List l $ map (\c -> (Hs.Lit l (Hs.Char l c [c]))) $ s
+    toExp (Hs.Lit l (Hs.String _ s _))             = foldr (\e x -> Con ":" [e, x]) (Con "[]" []) $ map Chr $ s
 
     -- Log
     toExp (Hs.Con _ (Hs.UnQual _ (Hs.Ident _ "True"))) = Log True
     toExp (Hs.Con _ (Hs.UnQual _ (Hs.Ident _ "False"))) = Log False
 
     -- Con "[]"
-    toExp (Hs.List _ [])     = Con "[]" []
-    toExp (Hs.List l (e:es)) = Con ":" [toExp e, toExp (Hs.List l es)]
+    toExp (Hs.List l es) = foldr (\e x -> Con ":" [toExp e, x]) (Con "[]" []) es
 
     -- EnumFrom...
     toExp (Hs.EnumFrom _ a)           = App (Var "enumFrom") [toExp a]

@@ -29,7 +29,7 @@ expr (Con "[]" [])                   = Hs.List l []
 expr (Con ":" [Chr a, b])            = case expr b of
                                             (Hs.List _ [])                -> Hs.Lit l (Hs.String l [a] [a])
                                             (Hs.Lit _ (Hs.String _ as _)) -> Hs.Lit l (Hs.String l (a:as) (a:as))
-                                            _                             -> Hs.InfixApp l (Hs.Lit l (Hs.Char l a [a])) (qop ":") (expr b)
+                                            _                             -> Hs.InfixApp l (expr (Chr a)) (qop ":") (expr b)
 expr (Con ":" [a, b])                = case expr b of
                                            (Hs.List _ []) -> Hs.List l [expr a]
                                            (Hs.List _ es) -> Hs.List l (expr a : es)

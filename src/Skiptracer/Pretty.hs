@@ -22,6 +22,7 @@ expr (Pop n)                         = Hs.Var l (qname n)
 expr (Var n)                         = Hs.Var l (qname n)
 expr (Num n)                         | n >= 0 = Hs.Lit l (Hs.Int l (fromIntegral n) (show n))
                                      | n < 0  = Hs.NegApp l (Hs.Lit l (Hs.Int l (fromIntegral (negate n)) (show n)))
+expr (Chr c)                         = Hs.Lit l (Hs.Char l c [c])
 expr (Log True)                      = Hs.Con l (qname "True")
 expr (Log False)                     = Hs.Con l (qname "False")
 expr (Con "[]" [])                   = Hs.List l []

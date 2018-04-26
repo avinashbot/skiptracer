@@ -35,6 +35,10 @@ instance ToExp (Hs.Exp l) where
     toExp (Hs.Lit _ (Hs.Int _ i _))               = Num (fromIntegral i)
     toExp (Hs.NegApp _ (Hs.Lit _ (Hs.Int _ i _))) = Num (negate (fromIntegral i))
 
+    -- Char/String
+    toExp (Hs.Lit _ (Hs.Char _ c _))               = Chr c
+    toExp (Hs.Lit l (Hs.String _ s _))             = toExp $ Hs.List l $ map (\c -> (Hs.Lit l (Hs.Char l c [c]))) $ s
+
     -- Log
     toExp (Hs.Con _ (Hs.UnQual _ (Hs.Ident _ "True"))) = Log True
     toExp (Hs.Con _ (Hs.UnQual _ (Hs.Ident _ "False"))) = Log False

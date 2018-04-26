@@ -45,6 +45,8 @@ data Exp
 
     -- | A number literal or a numerical value.
     | Num Int
+    -- | A char.
+    | Chr Char
     -- | A boolean literal or a boolean value.
     | Log Bool
     -- | A Datatype. Treated as a value by the interpreter, although it can
@@ -88,6 +90,7 @@ isValue :: Exp -> Bool
 isValue (Var v) = error $ "unbound variable: " ++ v
 isValue Con{}   = True
 isValue Num{}   = True
+isValue Chr{}   = True
 isValue Log{}   = True
 isValue Lam{}   = True
 isValue Pop{}   = True

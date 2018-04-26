@@ -28,6 +28,8 @@ fromExp = State Heap.empty []
 
 -- | Evaluate a primitive operation.
 primOp :: String -> Exp -> Exp -> Exp
+primOp "==" (Log m) (Log n) = Log (m == n)
+primOp "/=" (Log m) (Log n) = Log (m /= n)
 primOp "+"  (Num m) (Num n) = Num (m + n)
 primOp "-"  (Num m) (Num n) = Num (m - n)
 primOp "*"  (Num m) (Num n) = Num (m * n)
@@ -37,8 +39,12 @@ primOp "<=" (Num m) (Num n) = Log (m <= n)
 primOp ">=" (Num m) (Num n) = Log (m >= n)
 primOp "==" (Num m) (Num n) = Log (m == n)
 primOp "/=" (Num m) (Num n) = Log (m /= n)
-primOp "==" (Log m) (Log n) = Log (m == n)
-primOp "/=" (Log m) (Log n) = Log (m /= n)
+primOp "<"  (Chr m) (Chr n) = Log (m < n)
+primOp ">"  (Chr m) (Chr n) = Log (m > n)
+primOp "<=" (Chr m) (Chr n) = Log (m <= n)
+primOp ">=" (Chr m) (Chr n) = Log (m >= n)
+primOp "==" (Chr m) (Chr n) = Log (m == n)
+primOp "/=" (Chr m) (Chr n) = Log (m /= n)
 primOp s    e1      e2      = error $ "invalid primOp: " ++ unwords [show e1, s, show e2]
 
 eval :: State -> State

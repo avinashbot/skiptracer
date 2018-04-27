@@ -196,7 +196,7 @@ eval (State h (RefCtx a : cs) ex)
     | Syntax.isValue ex = State (Heap.update a ex h) cs ex
 
 --
--- Continuations
+-- Entering a Context
 --
 
 eval (State h cs (App f as))  = State h (AppCtx as : cs) f

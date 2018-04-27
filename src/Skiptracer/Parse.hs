@@ -110,9 +110,11 @@ name (Hs.Ident _ s)  = s
 name (Hs.Symbol _ s) = s
 
 toPat :: Hs.Pat l -> Pat
-toPat (Hs.PParen _ p)             = toPat p
-toPat (Hs.PWildCard _)            = PWld
-toPat (Hs.PVar _ n)               = PVar (name n)
+toPat (Hs.PParen _ p)                             = toPat p
+toPat (Hs.PWildCard _)                            = PWld
+toPat (Hs.PVar _ n)                               = PVar (name n)
+toPat (Hs.PLit _ (Hs.Signless _) (Hs.Char _ c _)) = PChr c
+toPat (Hs.PLit _ (Hs.Signless _) (Hs.String _ s _)) = foldr (\e x -> PCon ":" [e, x]) (PCon "[]" []) $ map PChr $ s
 toPat (Hs.PLit _ (Hs.Signless _) (Hs.Int _ i _)) = PNum (fromIntegral i)
 toPat (Hs.PLit _ (Hs.Negative _) (Hs.Int _ i _)) = PNum (negate (fromIntegral i))
 toPat (Hs.PAsPat _ n p) = PPat (name n) (toPat p)

@@ -23,6 +23,7 @@ data Pat
     | PPat String Pat   -- ^ @-pattern
     | PNum Int          -- ^ Number
     | PLog Bool         -- ^ Boolean
+    | PChr Char         -- ^ Char
     | PVar String       -- ^ Binding
     | PWld              -- ^ Wildcard
     deriving Show

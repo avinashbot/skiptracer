@@ -26,6 +26,7 @@ match _          PWld        = Just []
 match e          (PVar b)    = Just [(b, e)]
 match e          (PPat b p)  = Just $ (b, e) : fromMaybe [] (match e p)
 match (Num a)    (PNum b)    | a == b = Just []
+match (Chr a)    (PChr b)    | a == b = Just []
 match (Log a)    (PLog b)    | a == b = Just []
 match (Con a xs) (PCon b ys) | a == b = matchAll xs ys
 match (Var v)    _           = error $ "cannot match against unbound variable: " ++ v

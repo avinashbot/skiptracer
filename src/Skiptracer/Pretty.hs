@@ -58,15 +58,21 @@ decl (p, Lam (Just n) ps e) = Hs.FunBind l [Hs.Match l (name n) (map pat ps) (Hs
 decl (p, e)                 = Hs.PatBind l (pat p) (Hs.UnGuardedRhs l (expr e)) Nothing
 
 pat :: Pat -> Hs.Pat Hs.SrcSpanInfo
-pat (PCon ":" [p, q]) = Hs.PInfixApp l (pat p) (qname ":") (pat q)
-pat (PCon n ps)       | all (== ',') n = Hs.PTuple l Hs.Boxed (map pat ps)
-                      | otherwise      = Hs.PApp l (qname n) (map pat ps)
-pat (PPat n p)        = Hs.PAsPat l (name n) (pat p)
-pat (PNum i)          = Hs.PLit l (if i < 0 then Hs.Negative l else Hs.Signless l) (Hs.Int l (fromIntegral i) (show i))
-pat (PLog True)       = Hs.PApp l (qname "True") []
-pat (PLog False)      = Hs.PApp l (qname "False") []
-pat (PVar n)          = Hs.PVar l (name n)
-pat PWld              = Hs.PWildCard l
+pat (PCon "[]" [])         = Hs.PList l []
+pat (PCon ":" [PChr p, q]) = case pat q of
+                                 (Hs.PList _ [])                 -> Hs.PLit l (Hs.Signless l) (Hs.String l [p] [p])
+                                 (Hs.PLit _ _ (Hs.String _ s _)) -> Hs.PLit l (Hs.Signless l) (Hs.String l (p:s) (p:s))
+                                 pq                              -> Hs.PInfixApp l (pat (PChr p)) (qname ":") pq
+pat (PCon ":" [p, q])      = Hs.PInfixApp l (pat p) (qname ":") (pat q)
+pat (PCon n ps)            | all (== ',') n = Hs.PTuple l Hs.Boxed (map pat ps)
+                           | otherwise      = Hs.PApp l (qname n) (map pat ps)
+pat (PPat n p)             = Hs.PAsPat l (name n) (pat p)
+pat (PNum i)               = Hs.PLit l (if i < 0 then Hs.Negative l else Hs.Signless l) (Hs.Int l (fromIntegral i) (show i))
+pat (PChr c)               = Hs.PLit l (Hs.Signless l) (Hs.Char l c [c])
+pat (PLog True)            = Hs.PApp l (qname "True") []
+pat (PLog False)           = Hs.PApp l (qname "False") []
+pat (PVar n)               = Hs.PVar l (name n)
+pat PWld                   = Hs.PWildCard l
 
 qop :: String -> Hs.QOp Hs.SrcSpanInfo
 qop n = if isUpper (head n) then Hs.QConOp l (qname n) else Hs.QVarOp l (qname n)

@@ -5,17 +5,16 @@ import           Prelude ()
         []     -> r
         (x:xs) -> x : (xs ++ r)
 
-partition' f ls =
+filter f ls =
     case ls of
-        []     -> ([], [])
-        (x:xs) ->
-            let (ms, ns) = partition' f xs
-            in  if f x then (x : ms, ns) else (ms, x : ns)
+        []     -> []
+        (x:xs) -> let rest = filter f xs in if f x then x : rest else rest
 
 qsort ls =
     case ls of
         []     -> []
-        (x:xs) -> let (smaller, larger) = partition' (<= x) xs
+        (x:xs) -> let smaller = filter (<= x) xs
+                      larger  = filter (> x)  xs
                   in qsort smaller ++ [x] ++ qsort larger
 
 main = print (qsort [3, 5, 1, 4, 2])

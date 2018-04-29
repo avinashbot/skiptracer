@@ -202,7 +202,7 @@ eval (State h (RefCtx a : cs) ex)
 eval (State h cs (App f as))  = State h (AppCtx as : cs) f
 eval (State h cs (Ite c l r)) = State h (IteCtx l r : cs) c
 eval (State h cs (Cas c bs))  = State h (CasMatCtx bs : cs) c
-eval (State h cs (Ref v a))   = State h (RefCtx a : cs) (snd (Heap.deref a h))
+eval (State h cs (Ref v a))   = let (ua, he) = Heap.deref a h in State h (RefCtx ua : cs) he
 eval s@(State _ _ (Let _ _))  = Let.eval s
 
 --

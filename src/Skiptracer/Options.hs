@@ -26,7 +26,7 @@ getOpts =
 
 optionsParser :: Parser Options
 optionsParser = Options
-    <$> strOption (long "file-name" <> metavar "FILENAME" <> help "The file name to read from")
+    <$> argument str (metavar "FILENAME" <> help "The file name to read from")
     <*> option auto (long "max-trace" <> help "Maximum number of traces to generate" <> showDefault <> value 1000 <> metavar "MAX")
     <*> many (strOption (long "hide" <> short 'h' <> help "Function applications to hide" <> metavar "FUNC"))
     <*> many (strOption (long "skip" <> short 's' <> help "Function applications to skip entirely" <> metavar "FUNC"))

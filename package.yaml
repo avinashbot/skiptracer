@@ -21,12 +21,13 @@ description:         Please see the README on Github at <https://github.com/avin
 dependencies:
 - base >= 4.7 && < 5
 - haskell-src-exts >= 1.19 && < 1.20
+- optparse-applicative >= 0.14 && < 0.15
 
 library:
   source-dirs: src
 
 executables:
-  skiptracer-exe:
+  skp:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

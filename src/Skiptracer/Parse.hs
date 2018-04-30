@@ -39,6 +39,13 @@ instance ToExp (Hs.Exp l) where
     -- Con "[]"
     toExp (Hs.List l es) = foldr (\e x -> Con ":" [toExp e, x]) (Con "[]" []) es
 
+    -- Con
+    toExp (Hs.Con _ (Hs.Special _ (Hs.UnitCon _))) = Con "" []
+    toExp (Hs.Con _ (Hs.Special _ (Hs.ListCon _))) = Con "[]" []
+    toExp (Hs.Con _ (Hs.Special _ (Hs.Cons _)))    = Con ":" []
+    toExp (Hs.Con _ (Hs.Special _ (Hs.TupleCon _ _ a))) =
+        Con (replicate (a - 1) ',') []
+
     -- EnumFrom...
     toExp (Hs.EnumFrom _ a)           = App (Var "enumFrom") [toExp a]
     toExp (Hs.EnumFromTo _ a b)       = App (Var "enumFromTo") [toExp a, toExp b]
@@ -50,7 +57,7 @@ instance ToExp (Hs.Exp l) where
 
     -- Con "(,)"
     toExp (Hs.Tuple _ _ es) =
-        Con (replicate (length es) ',') (map toExp es)
+        Con (replicate (length es - 1) ',') (map toExp es)
 
     -- Lam
     toExp (Hs.Lambda _ ps e) = Lam Nothing (map toPat ps) (toExp e)
@@ -94,7 +101,7 @@ instance ToExp (Hs.QOp l) where
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.ListCon _))) = Con "[]" []
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.Cons _)))    = Con ":" []
     toExp (Hs.QConOp _ (Hs.Special _ (Hs.TupleCon _ _ a))) =
-        Con (replicate a ',') []
+        Con (replicate (a - 1) ',') []
 
 
 instance ToExp (Hs.Op l) where
@@ -124,9 +131,9 @@ toPat (Hs.PApp _ (Hs.UnQual _ (Hs.Ident _ "False")) []) = PLog False
 toPat (Hs.PApp _ (Hs.Special _ (Hs.ListCon _)) ps) = PCon "[]" (map toPat ps)
 toPat (Hs.PApp _ (Hs.Special _ (Hs.Cons _)) ps)    = PCon ":" (map toPat ps)
 toPat (Hs.PApp _ (Hs.Special _ (Hs.TupleCon _ _ a)) ps) =
-    PCon (replicate a ',') (map toPat ps)
+    PCon (replicate (a - 1) ',') (map toPat ps)
 toPat (Hs.PTuple _ _ ps) =
-    PCon (replicate (length ps) ',') (map toPat ps)
+    PCon (replicate (length ps - 1) ',') (map toPat ps)
 toPat (Hs.PList _ [])     = PCon "[]" []
 toPat (Hs.PList l (p:ps)) = PCon ":" [toPat p, toPat (Hs.PList l ps)]
 

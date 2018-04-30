@@ -82,7 +82,7 @@ qname "()" = Hs.Special l (Hs.UnitCon l)
 qname "[]" = Hs.Special l (Hs.ListCon l)
 qname ":"  = Hs.Special l (Hs.Cons l)
 qname n
-    | all (== ',') n = Hs.Special l (Hs.TupleCon l Hs.Boxed (length n))
+    | all (== ',') n = Hs.Special l (Hs.TupleCon l Hs.Boxed (length n + 1))
     | otherwise      = Hs.UnQual l (name n)
 
 name :: String -> Hs.Name Hs.SrcSpanInfo

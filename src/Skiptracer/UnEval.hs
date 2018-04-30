@@ -44,6 +44,13 @@ unHeap _ _ e            = e
 unHeapAlt :: [Int] -> Heap Exp -> Alt -> Alt
 unHeapAlt s h (Alt p me e) = Alt p (fmap (unHeap s h) me) (unHeap s h e)
 
+-- Remove references to values from an Exp, excluding recursive references.
+unHeap2 :: Heap Exp -> [Int] -> Exp -> ([Int], Exp)
+unHeap2 h s (Ref n a) | a `notElem` ms && Syntax.isValue ue = (ms, ue)
+  where
+    (ms, ue) = unHeap2 h (a:s) (snd (Heap.deref a h))
+unHeap2 _ _ e = ([], e)
+
 -- | Unwrap an Exp in the context of a Ctx.
 unCtx :: Exp -> Ctx -> Exp
 unCtx e (ConMatCtx n es _ ps) = Con n (es ++ [e] ++ map snd ps)

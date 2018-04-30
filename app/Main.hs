@@ -28,9 +28,13 @@ showTrace (Trace (State h cs e) trc) =
 
 main :: IO ()
 main = do
-    opts <- getOpts
-    file <- readFile . optFileName $ opts
-    let state = fromExp . parse $ file
+    opts  <- getOpts
+    file  <- readFile . optFileName $ opts
+    pFile <-
+        case optPreludeFile opts of
+            Nothing -> pure file
+            Just f  -> fmap (++ "\n" ++ file) (readFile f)
+    let state = fromExp . parse $ pFile
     let tOpts = TraceOpts (optHideFuncs opts) (optOnlyFuncs opts) (optSkipPatMat opts) (not (optSplitPrimOps opts))
     let traces = trace tOpts state
 

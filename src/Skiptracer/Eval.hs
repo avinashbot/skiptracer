@@ -105,8 +105,8 @@ eval (State h (AppArgCtx (Lam n (p:ps) bd) ag : cs) ex)
                 (e:es) -> State h1 (AppArgCtx (Lam Nothing ps bb) es : cs) e
     | otherwise = State h (PatMatCtx p : AppArgCtx (Lam n (p:ps) bd) ag : cs) ex
 
-eval (State _ (AppArgCtx (Lam _ [] _) _ : _) _) =
-    error "too many arguments provided to lambda"
+eval (State _ (AppArgCtx (Lam _ [] _) _ : _) _)
+    = error "too many arguments provided to lambda"
 
 eval (State _ (AppArgCtx fn _ : _) _)
     | Syntax.isValue fn = error "application to unexpected value"

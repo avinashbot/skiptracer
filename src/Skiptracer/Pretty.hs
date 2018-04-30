@@ -47,7 +47,7 @@ expr (App a bs)                      = foldl (Hs.App l) (expr a) (map expr bs)
 expr (Ite c t f)                     = Hs.If l (expr c) (expr t) (expr f)
 expr (Cas e as)                      = Hs.Case l (expr e) (map alt as)
 expr (Let ms e)                      = Hs.Let l (Hs.BDecls l (map decl ms)) (expr e)
-expr (Ref n i)                       = Hs.Var l (qname (n ++ show i))
+expr (Ref n i)                       = Hs.Var l (qname (n ++ "_" ++ show i))
 
 alt :: Alt -> Hs.Alt Hs.SrcSpanInfo
 alt (Alt p Nothing e)  = Hs.Alt l (pat p) (Hs.UnGuardedRhs l (expr e)) Nothing

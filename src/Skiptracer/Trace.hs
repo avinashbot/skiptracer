@@ -73,8 +73,12 @@ traceAll t (a@(State _ (AppCtx _ : _) (Lam (Just n) _ _)):as)
 traceAll t (a@(State _ (AppCtx _ : _) (Lam Nothing _ _)):as)
     | shouldTraceFn t "lambda" = Trace a TraceAppLam : traceAll t as
 -- If and Cases
-traceAll t (a@(State _ _ Ite{}):as) | shouldTraceFn t "if"   = Trace a TraceIte : traceAll t as
-traceAll t (a@(State _ _ Cas{}):as) | shouldTraceFn t "case" = Trace a TraceCas : traceAll t as
+traceAll t (a@(State _ (IteCtx _ _:_) (Log _)):as)
+    | shouldTraceFn t "if"   = Trace a TraceIte : traceAll t as
+traceAll t (a@(State _ (CasMatCtx (Alt p _ _:_):_) e):as)
+    | Match.matchable e p && shouldTraceFn t "case" = Trace a TraceCas : traceAll t as
+traceAll t (a@(State _ (CasGrdCtx{}:_) (Log _)):as)
+    | shouldTraceFn t "case" = Trace a TraceCas : traceAll t as
 -- Catch-all
 traceAll t (_:as) = traceAll t as
 

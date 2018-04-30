@@ -19,7 +19,7 @@ parseGhc src = case Hs.parseModule src of
 class ToExp a where toExp :: a -> Exp
 
 instance ToExp (Hs.Module l) where
-    toExp (Hs.Module _ _ _ _ ds) = Let (mapMaybe toDec ds) (Var "main")
+    toExp (Hs.Module _ _ _ _ ds) = Let (mapMaybe toGlobalDec ds) (Var "main")
 
 instance ToExp (Hs.Exp l) where
     toExp (Hs.Paren _ e) = toExp e
@@ -40,6 +40,7 @@ instance ToExp (Hs.Exp l) where
     toExp (Hs.List l es) = foldr (\e x -> Con ":" [toExp e, x]) (Con "[]" []) es
 
     -- Con
+    toExp (Hs.Con _ (Hs.UnQual _ n))               = Con (name n) []
     toExp (Hs.Con _ (Hs.Special _ (Hs.UnitCon _))) = Con "" []
     toExp (Hs.Con _ (Hs.Special _ (Hs.ListCon _))) = Con "[]" []
     toExp (Hs.Con _ (Hs.Special _ (Hs.Cons _)))    = Con ":" []
@@ -121,13 +122,14 @@ toPat (Hs.PParen _ p)                             = toPat p
 toPat (Hs.PWildCard _)                            = PWld
 toPat (Hs.PVar _ n)                               = PVar (name n)
 toPat (Hs.PLit _ (Hs.Signless _) (Hs.Char _ c _)) = PChr c
-toPat (Hs.PLit _ (Hs.Signless _) (Hs.String _ s _)) = foldr (\e x -> PCon ":" [e, x]) (PCon "[]" []) $ map PChr $ s
+toPat (Hs.PLit _ (Hs.Signless _) (Hs.String _ s _)) = foldr (\e x -> PCon ":" [e, x]) (PCon "[]" []) . map PChr $ s
 toPat (Hs.PLit _ (Hs.Signless _) (Hs.Int _ i _)) = PNum (fromIntegral i)
 toPat (Hs.PLit _ (Hs.Negative _) (Hs.Int _ i _)) = PNum (negate (fromIntegral i))
 toPat (Hs.PAsPat _ n p) = PPat (name n) (toPat p)
 toPat (Hs.PInfixApp _ p1 (Hs.Special _ (Hs.Cons _)) p2) = PCon ":" [toPat p1, toPat p2]
 toPat (Hs.PApp _ (Hs.UnQual _ (Hs.Ident _ "True")) []) = PLog True
 toPat (Hs.PApp _ (Hs.UnQual _ (Hs.Ident _ "False")) []) = PLog False
+toPat (Hs.PApp _ (Hs.UnQual _ (Hs.Ident _ n)) ps)      = PCon n (map toPat ps)
 toPat (Hs.PApp _ (Hs.Special _ (Hs.ListCon _)) ps) = PCon "[]" (map toPat ps)
 toPat (Hs.PApp _ (Hs.Special _ (Hs.Cons _)) ps)    = PCon ":" (map toPat ps)
 toPat (Hs.PApp _ (Hs.Special _ (Hs.TupleCon _ _ a)) ps) =
@@ -144,9 +146,14 @@ toAlt (Hs.Alt _ p (Hs.GuardedRhss _ rs) Nothing) = map toGuardedAlt rs
     toGuardedAlt (Hs.GuardedRhs _ [Hs.Qualifier _ g] e) =
         Alt (toPat p) (Just (toExp g)) (toExp e)
 
+toGlobalDec :: Hs.Decl l -> Maybe (Pat, Exp)
+toGlobalDec (Hs.FunBind _ [Hs.Match _ n ps (Hs.UnGuardedRhs _ e) Nothing]) =
+    Just (PVar (name n), Lam (Just (name n)) (map toPat ps) (toExp e))
+toGlobalDec d = toDec d
+
 toDec :: Hs.Decl l -> Maybe (Pat, Exp)
 toDec (Hs.FunBind _ [Hs.Match _ n ps (Hs.UnGuardedRhs _ e) Nothing]) =
-    Just (PVar (name n), Lam (Just (name n)) (map toPat ps) (toExp e))
+    Just (PVar (name n), Lam Nothing (map toPat ps) (toExp e))
 toDec (Hs.PatBind _ p (Hs.UnGuardedRhs _ e) Nothing) =
     Just (toPat p, toExp e)
 toDec _ = Nothing
